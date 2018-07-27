@@ -8,7 +8,7 @@ namespace ReporterNext.Models
     [JsonObject]
     public class CRCResponse
     {
-        private static HMAC _hmac = HMACSHA256.Create();
+        private static KeyedHashAlgorithm _hmac = KeyedHashAlgorithm.Create("HMACSHA256");
 
         public CRCResponse()
         {
