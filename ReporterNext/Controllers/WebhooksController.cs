@@ -22,8 +22,8 @@ namespace ReporterNext.Controllers
 
         // GET webhooks/twitter
         [HttpGet("[action]")]
-        public CRCResponse Twitter([FromQuery(Name = "crc_token")] string crcToken)
-            => new CRCResponse(_configuration["Twitter:ConsumerSecret"], crcToken);
+        public IActionResult Twitter([FromQuery(Name = "crc_token")] string crcToken) =>
+            crcToken is null ? NoContent() : Ok(new CRCResponse(_configuration["Twitter:ConsumerSecret"], crcToken)) as IActionResult;
 
         // POST webhooks/twitter
         [HttpPost("[action]")]
