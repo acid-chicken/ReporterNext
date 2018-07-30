@@ -9,7 +9,7 @@ using ReporterNext.Models;
 
 namespace ReporterNext.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class WebhooksController : ControllerBase
     {
