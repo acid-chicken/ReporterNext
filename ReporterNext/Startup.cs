@@ -13,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using ReporterNext.Components;
 
 namespace ReporterNext
 {
@@ -48,7 +49,13 @@ namespace ReporterNext
             app.UseHttpsRedirection();
 
             app.UseHangfireServer();
-            app.UseHangfireDashboard("/dashboard");
+            app.UseHangfireDashboard("/dashboard", new DashboardOptions()
+            {
+                Authorization = new []
+                {
+                    new DashboardAuthorizationFilter(Configuration["Dashboard:Key"])
+                }
+            });
 
             app.UseMvc(routes =>
                 routes.MapRoute("default", "{controller=Status}/{action=Index}"));
