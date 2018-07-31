@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json.Linq;
@@ -29,7 +30,7 @@ namespace ReporterNext.Controllers
         [HttpPost("[action]")]
         public void Twitter([FromBody] JToken value)
         {
-            Console.Out.WriteLineAsync(value.ToString());
+            BackgroundJob.Enqueue(() => Console.WriteLine(value));
         }
     }
 }
