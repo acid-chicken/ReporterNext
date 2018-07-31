@@ -53,7 +53,7 @@ namespace ReporterNext
             {
                 Authorization = new []
                 {
-                    new DashboardAuthorizationFilter(Configuration["Dashboard:Key"])
+                    new DashboardAuthorizationFilter()
                 }
             });
 
