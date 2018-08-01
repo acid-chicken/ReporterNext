@@ -28,7 +28,7 @@ namespace ReporterNext.Controllers
 
         // POST webhooks/twitter
         [HttpPost("[action]")]
-        public void Twitter([FromBody] JToken value)
+        public void Twitter([FromBody] Event value)
         {
             BackgroundJob.Enqueue(() => Console.WriteLine(value));
         }
