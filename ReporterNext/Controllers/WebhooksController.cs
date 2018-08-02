@@ -28,11 +28,11 @@ namespace ReporterNext.Controllers
 
         // POST webhooks/twitter
         [HttpPost("[action]")]
-        public IActionResult Twitter([FromBody] string json)
+        public IActionResult Twitter([FromBody] EventObject eventObject)
         {
-            if (string.IsNullOrEmpty(json))
+            if (eventObject is null)
                 return BadRequest();
-            BackgroundJob.Enqueue(() => JsonConvert.DeserializeObject<EventObject>(json).Build());
+            BackgroundJob.Enqueue(() => eventObject.Build());
             return Ok();
         }
     }
