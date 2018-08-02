@@ -20,10 +20,10 @@ namespace ReporterNext.Components
         public IDisposable Subscribe(IObserver<T> observer)
         {
             _observers.Add(observer);
-            return new UnsubscribeOnDispose<T>(_observers, observer);
+            return new UnsubscribeOnDispose(_observers, observer);
         }
 
-        private class UnsubscribeOnDispose<T> : IDisposable
+        private class UnsubscribeOnDispose : IDisposable
         {
             private readonly IList<IObserver<T>> _observers;
 
