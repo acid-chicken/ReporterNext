@@ -1,13 +1,34 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using CoreTweet;
 using CoreTweet.Core;
 using Newtonsoft.Json;
 
 namespace ReporterNext.Models
 {
+    public interface IEvent
+    {
+        DateTimeOffset CreatedAt { get; set; }
+    }
+
+    public interface ITargetEvent<T> : IEvent
+    {
+        T Target { get; set; }
+    }
+
+    public interface ISourceEvent<T> : IEvent
+    {
+        T Source { get; set; }
+    }
+
+    public abstract class Event : IEvent
+    {
+        public DateTimeOffset CreatedAt { get; set; }
+    }
+
     [JsonObject]
-    public class Event
+    public class EventObject
     {
         [JsonProperty("for_user_id")]
         public string ForUserId { get; set; }
@@ -16,41 +37,238 @@ namespace ReporterNext.Models
         public Status[] TweetCreateEvents { get; set; }
 
         [JsonProperty("favorite_events")]
-        public FavoriteEvent[] FavoriteEvents { get; set; }
+        public FavoriteEventObject[] FavoriteEvents { get; set; }
 
         [JsonProperty("follow_events")]
-        public SourceTargetEvent<User, User> FollowEvents { get; set; }
+        public SourceTargetEventObject<User, User> FollowEvents { get; set; }
 
         [JsonProperty("block_events")]
-        public SourceTargetEvent<User, User> BlockEvents { get; set; }
+        public SourceTargetEventObject<User, User> BlockEvents { get; set; }
 
         [JsonProperty("mute_events")]
-        public SourceTargetEvent<User, User> MuteEvents { get; set; }
+        public SourceTargetEventObject<User, User> MuteEvents { get; set; }
 
         [JsonProperty("user_event")]
-        public UserEvent UserEvent { get; set; }
+        public UserEventObject UserEvent { get; set; }
 
         [JsonProperty("direct_message_events")]
-        public DirectMessageEvent[] DirectMessageEvents { get; set; }
+        public DirectMessageEventObject[] DirectMessageEvents { get; set; }
 
         [JsonProperty("direct_message_indicate_typing_events")]
-        public DirectMessageIndicateTypingEvent[] DirectMessageIndicateTypingEvents { get; set; }
+        public DirectMessageIndicateTypingEventObject[] DirectMessageIndicateTypingEvents { get; set; }
 
         [JsonProperty("direct_message_mark_read_events")]
-        public DirectMessageMarkReadEvent[] DirectMessageMarkReadEvents { get; set; }
+        public DirectMessageMarkReadEventObject[] DirectMessageMarkReadEvents { get; set; }
 
         [JsonProperty("tweet_delete_events")]
-        public TweetDeleteEvent[] TweetDeleteEvents { get; set; }
+        public TweetDeleteEventObject[] TweetDeleteEvents { get; set; }
 
         [JsonProperty("apps")]
         public IDictionary<string, AppObject> Apps { get; set; }
 
         [JsonProperty("users")]
         public IDictionary<string, UserObject> Users { get; set; }
+
+
+        public (long forUserId, IEnumerable<Event> events) Build() =>
+
+            (long.TryParse(ForUserId ?? "", out var forUserId) ? forUserId : default,
+            !(TweetCreateEvents is null) ?
+                TweetCreateEvents.Select(x => new TweetCreateEvent()
+                {
+                    CreatedAt = x.CreatedAt,
+                    Target = x
+                }) :
+            !(FavoriteEvents is null) ?
+                FavoriteEvents.Select(x => new FavoriteEvent()
+                {
+                    CreatedAt = x.Timestamp,
+                    Target = x.FavoritedStatus,
+                    Source = x.User
+                }) :
+            !(FollowEvents is null) ?
+                new []
+                {
+                    new FollowEvent()
+                    {
+                        CreatedAt = FollowEvents.Timestamp,
+                        Target = FollowEvents.Target,
+                        Source = FollowEvents.Source
+                    }
+                } :
+            !(BlockEvents is null) ?
+                new []
+                {
+                    new BlockEvent()
+                    {
+                        CreatedAt = BlockEvents.Timestamp,
+                        Target = BlockEvents.Target,
+                        Source = BlockEvents.Source
+                    }
+                } :
+            !(MuteEvents is null) ?
+                new []
+                {
+                    new MuteEvent()
+                    {
+                        CreatedAt = MuteEvents.Timestamp,
+                        Target = MuteEvents.Target,
+                        Source = MuteEvents.Source
+                    }
+                } :
+            !(UserEvent is null || UserEvent.Revoke is null) ?
+                new []
+                {
+                    new UserRevokeEvent()
+                    {
+                        Target = long.TryParse(UserEvent.Revoke.Target.AppId ?? "", out var appId) ? appId : default,
+                        Source = long.TryParse(UserEvent.Revoke.Source.UserId ?? "", out var userId) ? userId : default
+                    }
+                } :
+            !(DirectMessageEvents is null) ?
+                DirectMessageEvents.Select(x => new DirectMessageEvent()
+                {
+                    CreatedAt = x.Timestamp,
+                    Target = Users.TryGetValue(x.MessageCreate.Target.RecipientId, out var target) ? new User()
+                    {
+                        Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
+                        CreatedAt = target.Timestamp,
+                        Name = target.Name,
+                        ScreenName = target.ScreenName,
+                        Location = target.Location,
+                        Description = target.Description,
+                        IsProtected = target.IsProtected,
+                        IsVerified = target.IsVerified,
+                        FollowersCount = target.FollowersCount,
+                        FriendsCount = target.FriendsCount,
+                        StatusesCount = target.StatusesCount,
+                        ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
+                        ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
+                    } : null,
+                    Source = Users.TryGetValue(x.MessageCreate.SenderId, out var source) ? new User()
+                    {
+                        Id = long.TryParse(source.Id, out var sourceId) ? sourceId : null as long?,
+                        CreatedAt = source.Timestamp,
+                        Name = source.Name,
+                        ScreenName = source.ScreenName,
+                        Location = source.Location,
+                        Description = source.Description,
+                        IsProtected = source.IsProtected,
+                        IsVerified = source.IsVerified,
+                        FollowersCount = source.FollowersCount,
+                        FriendsCount = source.FriendsCount,
+                        StatusesCount = source.StatusesCount,
+                        ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
+                        ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
+                    } : null,
+                    App = Apps.TryGetValue(x.MessageCreate.SourceAppId, out var app) ? new App()
+                    {
+                        Id = app.Id,
+                        Name = app.Name,
+                        Url = app.Url
+                    } : null,
+                    Content = x.MessageCreate.MessageData
+                }) :
+            !(DirectMessageIndicateTypingEvents is null) ?
+                DirectMessageIndicateTypingEvents.Select(x => new DirectMessageIndicateTypingEvent()
+                {
+                    CreatedAt = x.Timestamp,
+                    Target = Users.TryGetValue(x.Target.RecipientId, out var target) ? new User()
+                    {
+                        Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
+                        CreatedAt = target.Timestamp,
+                        Name = target.Name,
+                        ScreenName = target.ScreenName,
+                        Location = target.Location,
+                        Description = target.Description,
+                        IsProtected = target.IsProtected,
+                        IsVerified = target.IsVerified,
+                        FollowersCount = target.FollowersCount,
+                        FriendsCount = target.FriendsCount,
+                        StatusesCount = target.StatusesCount,
+                        ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
+                        ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
+                    } : null,
+                    Source = Users.TryGetValue(x.SenderId, out var source) ? new User()
+                    {
+                        Id = long.TryParse(target.Id, out var sourceId) ? sourceId : null as long?,
+                        CreatedAt = source.Timestamp,
+                        Name = source.Name,
+                        ScreenName = source.ScreenName,
+                        Location = source.Location,
+                        Description = source.Description,
+                        IsProtected = source.IsProtected,
+                        IsVerified = source.IsVerified,
+                        FollowersCount = source.FollowersCount,
+                        FriendsCount = source.FriendsCount,
+                        StatusesCount = source.StatusesCount,
+                        ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
+                        ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
+                    } : null,
+                }) :
+            !(DirectMessageMarkReadEvents is null) ?
+                DirectMessageMarkReadEvents.Select(x => new DirectMessageMarkReadEvent()
+                {
+                    CreatedAt = x.Timestamp,
+                    Target = Users.TryGetValue(x.Target.RecipientId, out var target) ? new User()
+                    {
+                        Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
+                        CreatedAt = target.Timestamp,
+                        Name = target.Name,
+                        ScreenName = target.ScreenName,
+                        Location = target.Location,
+                        Description = target.Description,
+                        IsProtected = target.IsProtected,
+                        IsVerified = target.IsVerified,
+                        FollowersCount = target.FollowersCount,
+                        FriendsCount = target.FriendsCount,
+                        StatusesCount = target.StatusesCount,
+                        ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
+                        ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
+                    } : null,
+                    Source = Users.TryGetValue(x.SenderId, out var source) ? new User()
+                    {
+                        Id = long.TryParse(source.Id, out var sourceId) ? sourceId : null as long?,
+                        CreatedAt = source.Timestamp,
+                        Name = source.Name,
+                        ScreenName = source.ScreenName,
+                        Location = source.Location,
+                        Description = source.Description,
+                        IsProtected = source.IsProtected,
+                        IsVerified = source.IsVerified,
+                        FollowersCount = source.FollowersCount,
+                        FriendsCount = source.FriendsCount,
+                        StatusesCount = source.StatusesCount,
+                        ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
+                        ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
+                    } : null,
+                }) :
+            !(TweetDeleteEvents is null) ?
+                TweetDeleteEvents.Select(x => new TweetDeleteEvent()
+                {
+                    CreatedAt = x.Timestamp,
+                    Target = long.TryParse(x.Status.Id, out var targetId) ? targetId : default,
+                    Source = long.TryParse(x.Status.UserId, out var sourceId) ? sourceId : default,
+                }) :
+                Enumerable.Empty<Event>());
+    }
+
+    public abstract class ToStatusEvent : Event, ITargetEvent<Status>
+    {
+        public Status Target { get; set; }
+    }
+
+    public class TweetCreateEvent : ToStatusEvent
+    {
+    }
+
+    public class FavoriteEvent : ToStatusEvent, ISourceEvent<User>
+    {
+        public User Source { get; set; }
     }
 
     [JsonObject]
-    public class FavoriteEvent
+    public class FavoriteEventObject
     {
         [JsonProperty("id")]
         public string Id { get; set; }
@@ -68,8 +286,27 @@ namespace ReporterNext.Models
         public User User { get; set; }
     }
 
+    public abstract class UserToUserEvent : Event, ITargetEvent<User>, ISourceEvent<User>
+    {
+        public User Source { get; set; }
+
+        public User Target { get; set; }
+    }
+
+    public class FollowEvent : UserToUserEvent
+    {
+    }
+
+    public class MuteEvent : UserToUserEvent
+    {
+    }
+
+    public class BlockEvent : UserToUserEvent
+    {
+    }
+
     [JsonObject]
-    public class SourceTargetEvent<TSource, TTarget>
+    public class SourceTargetEventObject<TSource, TTarget>
     {
         [JsonProperty("type")]
         public string Type { get; set; }
@@ -84,15 +321,22 @@ namespace ReporterNext.Models
         public TTarget Target { get; set; }
     }
 
-    [JsonObject]
-    public class UserEvent
+    public class UserRevokeEvent : Event, ITargetEvent<long>, ISourceEvent<long>
     {
-        [JsonProperty("revoke")]
-        public UserRevokeEvent Revoke { get; set; }
+        public long Target { get; set; }
+
+        public long Source { get; set; }
     }
 
     [JsonObject]
-    public class UserRevokeEvent
+    public class UserEventObject
+    {
+        [JsonProperty("revoke")]
+        public UserRevokeEventObject Revoke { get; set; }
+    }
+
+    [JsonObject]
+    public class UserRevokeEventObject
     {
         [JsonProperty("date_time")]
         public DateTimeOffset DateTime { get; set; }
@@ -119,7 +363,7 @@ namespace ReporterNext.Models
     }
 
     [JsonObject]
-    public abstract class DirectMessageEventBase
+    public abstract class DirectMessageEventObjectBase
     {
         [JsonProperty("created_timestamp"), JsonConverter(typeof(TimestampConverter))]
         public DateTimeOffset Timestamp { get; set; }
@@ -131,8 +375,23 @@ namespace ReporterNext.Models
         public string SenderId { get; set; }
     }
 
+    public class DirectMessageEvent : UserToUserEvent
+    {
+        public App App { get; set; }
+        public MessageData Content { get; set; }
+    }
+
+    public class App
+    {
+        public string Id { get; set; }
+
+        public string Name { get; set; }
+
+        public string Url { get; set; }
+    }
+
     [JsonObject]
-    public class DirectMessageEvent
+    public class DirectMessageEventObject
     {
         [JsonProperty("type")]
         public string Type { get; set; }
@@ -144,11 +403,11 @@ namespace ReporterNext.Models
         public DateTimeOffset Timestamp { get; set; }
 
         [JsonProperty("message_create")]
-        public Message MessageCreate { get; set; }
+        public MessageObject MessageCreate { get; set; }
     }
 
     [JsonObject]
-    public class Message : DirectMessageEventBase
+    public class MessageObject : DirectMessageEventObjectBase
     {
         [JsonProperty("source_app_id")]
         public string SourceAppId { get; set; }
@@ -164,75 +423,35 @@ namespace ReporterNext.Models
         public string RecipientId { get; set; }
     }
 
-    [JsonObject]
-    public class MessageData
-    {
-        [JsonProperty("text")]
-        public string Text { get; set; }
-
-        [JsonProperty("entities")]
-        public Entities Entities { get; set; }
-
-        [JsonProperty("quick_reply")]
-        public QuickReply QuickReply { get; set; }
-
-        [JsonProperty("ctas")]
-        public CallToAction[] CallToActions { get; set; }
-    }
-
-    [JsonObject]
-    public class QuickReply
-    {
-        [JsonProperty("type")]
-        public string Type { get; set; }
-
-        [JsonProperty("options")]
-        public QuickReplyOption[] Options { get; set; }
-    }
-
-    [JsonObject]
-    public class QuickReplyOption
-    {
-        [JsonProperty("label")]
-        public string Label { get; set; }
-
-        [JsonProperty("metadata")]
-        public string Metadata { get; set; }
-
-        [JsonProperty("description")]
-        public string Description { get; set; }
-    }
-
-    [JsonObject]
-    public class CallToAction
-    {
-        [JsonProperty("type")]
-        public string Type { get; set; }
-
-        [JsonProperty("label")]
-        public string Label { get; set; }
-
-        [JsonProperty("url")]
-        public string Url { get; set; }
-
-        [JsonProperty("tco_url")]
-        public string TcoUrl { get; set; }
-    }
-
-    [JsonObject]
-    public class DirectMessageIndicateTypingEvent : DirectMessageEventBase
+    public class DirectMessageIndicateTypingEvent : UserToUserEvent
     {
     }
 
     [JsonObject]
-    public class DirectMessageMarkReadEvent : DirectMessageEventBase
+    public class DirectMessageIndicateTypingEventObject : DirectMessageEventObjectBase
+    {
+    }
+
+    public class DirectMessageMarkReadEvent : UserToUserEvent
+    {
+        public long LastReadEventId { get; set; }
+    }
+
+    [JsonObject]
+    public class DirectMessageMarkReadEventObject : DirectMessageEventObjectBase
     {
         [JsonProperty("last_read_event_id")]
         public string LastReadEventId { get; set; }
     }
 
+    public class TweetDeleteEvent : Event, ITargetEvent<long>, ISourceEvent<long>
+    {
+        public long Target { get; set; }
+        public long Source { get; set; }
+    }
+
     [JsonObject]
-    public class TweetDeleteEvent
+    public class TweetDeleteEventObject
     {
         [JsonProperty("status")]
         public StatusIdsObject Status { get; set; }

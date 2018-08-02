@@ -2,16 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CoreTweet;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using ReporterNext.Models;
 
 namespace ReporterNext.Controllers
 {
-    [Route("[controller]")]
-    [ApiController]
+    [Route("[controller]"), ApiController]
     public class WebhooksController : ControllerBase
     {
         private IConfiguration _configuration;
@@ -23,14 +23,17 @@ namespace ReporterNext.Controllers
 
         // GET webhooks/twitter
         [HttpGet("[action]")]
-        public IActionResult Twitter([FromQuery(Name = "crc_token")] string crcToken) =>
+        public IActionResult Twitter([FromQuery(Name = "crc_token")] string crcToken, [FromQuery(Name = "nonce")] string nonce) =>
             crcToken is null ? NoContent() : Ok(new CRCResponse(_configuration["Twitter:ConsumerSecret"], crcToken)) as IActionResult;
 
         // POST webhooks/twitter
         [HttpPost("[action]")]
-        public void Twitter([FromBody] Event value)
+        public IActionResult Twitter([FromBody] string json)
         {
-            BackgroundJob.Enqueue(() => Console.WriteLine(value));
+            if (string.IsNullOrEmpty(json))
+                return BadRequest();
+            BackgroundJob.Enqueue(() => JsonConvert.DeserializeObject<EventObject>(json).Build());
+            return Ok();
         }
     }
 }
