@@ -30,6 +30,7 @@ namespace ReporterNext
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IConfiguration>(Configuration);
+            services.AddSingleton<EventObservableFactory>();
             services.AddHangfire(configuration =>
                 configuration.UseLiteDbStorage());
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Latest);
