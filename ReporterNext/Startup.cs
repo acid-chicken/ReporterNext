@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.LiteDB;
@@ -14,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ReporterNext.Components;
+using ReporterNext.Models;
 
 namespace ReporterNext
 {
@@ -31,6 +33,7 @@ namespace ReporterNext
         {
             services.AddSingleton<IConfiguration>(Configuration);
             services.AddSingleton<EventObservableFactory>();
+            services.AddSingleton<CRC>(new CRC(KeyedHashAlgorithm.Create("HMACSHA256"), Configuration["Twitter:ConsumerSecret"]));
             services.AddHangfire(configuration =>
                 configuration.UseLiteDbStorage());
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Latest);

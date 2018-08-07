@@ -17,15 +17,18 @@ namespace ReporterNext.Controllers
     {
         private IConfiguration _configuration;
 
-        public WebhooksController(IConfiguration configuration)
+        private CRC _crc;
+
+        public WebhooksController(IConfiguration configuration, CRC crc)
         {
             _configuration = configuration;
+            _crc = crc;
         }
 
         // GET webhooks/twitter
         [HttpGet("[action]")]
         public IActionResult Twitter([FromQuery(Name = "crc_token")] string crcToken, [FromQuery(Name = "nonce")] string nonce) =>
-            crcToken is null ? NoContent() : Ok(new CRCResponse(_configuration["Twitter:ConsumerSecret"], crcToken)) as IActionResult;
+            Ok(_crc.GenerateResponse(crcToken));
 
         // POST webhooks/twitter
         [HttpPost("[action]")]
