@@ -32,8 +32,10 @@ namespace ReporterNext
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IConfiguration>(Configuration);
-            services.AddSingleton<EventObservableFactory>();
             services.AddSingleton<CRC>(new CRC(KeyedHashAlgorithm.Create("HMACSHA256"), Configuration["Twitter:ConsumerSecret"]));
+            services.AddReactiveInterface(Configuration.GetValue(
+                "Twitter:ForUserId",
+                long.TryParse(Configuration["Twitter:AccessToken"].Split('-').FirstOrDefault(), out var result) ? result : default));
             services.AddHangfire(configuration =>
                 configuration.UseLiteDbStorage());
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Latest);
