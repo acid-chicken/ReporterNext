@@ -24,11 +24,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-
-#if ASYNC
 using System.Threading;
 using System.Threading.Tasks;
-#endif
 
 namespace CoreTweet
 {
@@ -48,26 +45,12 @@ namespace CoreTweet
 
         internal static string JoinToString<T>(this IEnumerable<T> source)
         {
-#if !NET35
             return string.Concat(source);
-#else
-            var sb = new StringBuilder();
-            foreach (var x in source)
-            {
-                var s = x?.ToString();
-                if (s != null) sb.Append(s);
-            }
-            return sb.ToString();
-#endif
         }
 
         internal static string JoinToString<T>(this IEnumerable<T> source, string separator)
         {
-#if !NET35
             return string.Join(separator, source);
-#else
-            return string.Join(separator, source.Select(x => x.ToString()).ToArray());
-#endif
         }
 
         internal static IEnumerable<T> EndWith<T>(this IEnumerable<T> source, params T[] second)
@@ -77,15 +60,10 @@ namespace CoreTweet
 
         internal static TResult[] ConvertAll<TSource, TResult>(this TSource[] source, Func<TSource, TResult> selector)
         {
-#if NETCORE
             var result = new TResult[source.Length];
             for (var i = 0; i < source.Length; i++)
                 result[i] = selector(source[i]);
             return result;
-#else
-            var converter = new Converter<TSource, TResult>(selector);
-            return Array.ConvertAll(source, converter);
-#endif
         }
     }
 
@@ -127,18 +105,7 @@ namespace CoreTweet
         }
     }
 
-#if SYNC
-    internal static class StreamExtensions
-    {
-        internal static void WriteString(this Stream stream, string value)
-        {
-            var bytes = Encoding.UTF8.GetBytes(value);
-            stream.Write(bytes, 0, bytes.Length);
-        }
-    }
-#endif
 
-#if NETCORE
     internal static class TypeInfoExtensions
     {
         internal static IEnumerable<Type> GetInterfaces(this TypeInfo source)
@@ -156,10 +123,8 @@ namespace CoreTweet
             return source.GetMethod;
         }
     }
-#endif
 
 
-#if ASYNC
     internal struct Unit
     {
         internal static readonly Unit Default = new Unit();
@@ -269,5 +234,4 @@ namespace CoreTweet
             }, cancellationToken, options);
         }
     }
-#endif
 }

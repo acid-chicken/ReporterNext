@@ -48,10 +48,7 @@ namespace CoreTweet
     /// Represents a cursored message object.
     /// </summary>
     [JsonObject]
-    public class Cursored<T> : CoreBase, IEnumerable<T>, ITwitterResponse, ICursored
-#if !(NET35 || NET40)
-    , IReadOnlyList<T>
-#endif
+    public class Cursored<T> : CoreBase, IEnumerable<T>, ITwitterResponse, ICursored , IReadOnlyList<T>
     {
         /// <summary>
         /// Gets the results.
@@ -129,90 +126,6 @@ namespace CoreTweet
         }
 
     }
-
-    #if SYNC
-    internal static class Cursored
-    {
-        internal static IEnumerable<T> Enumerate<T>(TokensBase tokens, string apiName, EnumerateMode mode, params Expression<Func<string,object>>[] parameters)
-        {
-            var p = InternalUtils.ExpressionsToDictionary(parameters);
-            return EnumerateImpl<T>(tokens, apiName, mode, p);
-        }
-
-        internal static IEnumerable<T> Enumerate<T>(TokensBase tokens, string apiName, EnumerateMode mode, IDictionary<string, object> parameters)
-        {
-            return EnumerateImpl<T>(tokens, apiName, mode, parameters);
-        }
-
-        internal static IEnumerable<T> Enumerate<T>(TokensBase tokens, string apiName, EnumerateMode mode, object parameters)
-        {
-            var p = InternalUtils.ResolveObject(parameters);
-            return EnumerateImpl<T>(tokens, apiName, mode, p);
-        }
-
-        internal static IEnumerable<T> EnumerateImpl<T>(TokensBase tokens, string apiName, EnumerateMode mode, IEnumerable<KeyValuePair<string, object>> parameters)
-        {
-            if(mode == EnumerateMode.Next)
-                return EnumerateForwardImpl<Cursored<T>, T>(tokens, apiName, parameters);
-            else
-                return EnumerateBackwardImpl<Cursored<T>, T>(tokens, apiName, parameters);
-        }
-
-        internal static IEnumerable<U> EnumerateForward<T, U>(TokensBase tokens, string apiName, params Expression<Func<string, object>>[] parameters)
-            where T : CoreBase, ICursorForwardable, IEnumerable<U>
-        {
-            var p = InternalUtils.ExpressionsToDictionary(parameters);
-            return EnumerateForwardImpl<T, U>(tokens, apiName, p);
-        }
-
-        internal static IEnumerable<U> EnumerateForward<T, U>(TokensBase tokens, string apiName, IDictionary<string, object> parameters)
-            where T : CoreBase, ICursorForwardable, IEnumerable<U>
-        {
-            return EnumerateForwardImpl<T, U>(tokens, apiName, parameters);
-        }
-
-        internal static IEnumerable<U> EnumerateForward<T, U>(TokensBase tokens, string apiName, object parameters)
-            where T : CoreBase, ICursorForwardable, IEnumerable<U>
-        {
-            var p = InternalUtils.ResolveObject(parameters);
-            return EnumerateForwardImpl<T, U>(tokens, apiName, p);
-        }
-
-        internal static IEnumerable<U> EnumerateForwardImpl<T, U>(TokensBase tokens, string apiName, IEnumerable<KeyValuePair<string, object>> parameters)
-            where T : CoreBase, ICursorForwardable, IEnumerable<U>
-        {
-            var prmList = parameters.ToList();
-            while(true)
-            {
-                var r = tokens.AccessApiImpl<T>(MethodType.Get, apiName, prmList, "");
-                foreach(var i in r)
-                    yield return i;
-                var next = r.NextCursor;
-                if(string.IsNullOrEmpty(next) || next == "0")
-                    break;
-                prmList.RemoveAll(kvp => kvp.Key == "cursor");
-                prmList.Add(new KeyValuePair<string, object>("cursor", next));
-            }
-        }
-        
-        internal static IEnumerable<U> EnumerateBackwardImpl<T, U>(TokensBase tokens, string apiName, IEnumerable<KeyValuePair<string, object>> parameters)
-            where T : CoreBase, ICursorBackwardable, IEnumerable<U>
-        {
-            var prmList = parameters.ToList();
-            while(true)
-            {
-                var r = tokens.AccessApiImpl<T>(MethodType.Get, apiName, prmList, "");
-                foreach(var i in r)
-                    yield return i;
-                var next = r.PreviousCursor;
-                if(string.IsNullOrEmpty(next) || next == "0")
-                    break;
-                prmList.RemoveAll(kvp => kvp.Key == "cursor");
-                prmList.Add(new KeyValuePair<string, object>("cursor", next));
-            }
-        }
-    }
-    #endif   
 
     /// <summary>
     /// Provides a mode of enumeration.

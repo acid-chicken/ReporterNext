@@ -42,10 +42,7 @@ namespace CoreTweet.Core
     /// <summary>
     /// The collection of response.
     /// </summary>
-    public class ListedResponse<T> : ITwitterResponse, IEnumerable<T>
-#if !(NET35 || NET40)
-    , IReadOnlyList<T>
-#endif
+    public class ListedResponse<T> : ITwitterResponse, IEnumerable<T>, IReadOnlyList<T>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CoreTweet.Core.ListedResponse&lt;T&gt;"/> class with a specified collection.
@@ -107,10 +104,7 @@ namespace CoreTweet.Core
     /// </summary>
     /// <typeparam name="TKey">The type of the keys in the dictionary.</typeparam>
     /// <typeparam name="TValue">The type of the values in the dictionary.</typeparam>
-    public class DictionaryResponse<TKey, TValue> : ITwitterResponse, IEnumerable<KeyValuePair<TKey, TValue>>
-#if !(NET35 || NET40)
-    , IReadOnlyDictionary<TKey, TValue>
-#endif
+    public class DictionaryResponse<TKey, TValue> : ITwitterResponse, IEnumerable<KeyValuePair<TKey, TValue>>, IReadOnlyDictionary<TKey, TValue>
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CoreTweet.Core.DictionaryResponse&lt;TKey, TValue&gt;"/> class with a specified dictionary.

@@ -21,7 +21,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if ASYNC
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -226,9 +225,6 @@ namespace CoreTweet.Core
         {
             var options = this.ConnectionOptions != null ? (ConnectionOptions)this.ConnectionOptions.Clone() : new ConnectionOptions();
             options.UseCompression = options.UseCompressionOnStreaming;
-#if SYNC
-            options.ReadWriteTimeout = Timeout.Infinite;
-#endif
             return this.SendRequestAsyncImpl(type, url, parameters, options, cancellationToken);
         }
 
@@ -331,4 +327,3 @@ namespace CoreTweet.Core
         }
     }
 }
-#endif

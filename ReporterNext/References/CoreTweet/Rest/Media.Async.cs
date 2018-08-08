@@ -21,7 +21,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if ASYNC
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -116,7 +115,6 @@ namespace CoreTweet.Rest
             return this.UploadAsyncImpl(parameters, cancellationToken, progress);
         }
 
-#if FILEINFO
         /// <summary>
         /// <para>Upload media (images) to Twitter for use in a Tweet or Twitter-hosted Card.</para>
         /// </summary>
@@ -132,7 +130,6 @@ namespace CoreTweet.Rest
             if (additional_owners != null) parameters.Add("additional_owners", additional_owners);
             return this.UploadAsyncImpl(parameters, cancellationToken, progress);
         }
-#endif
         #endregion
 
         private Task<AsyncResponse> CommandAsync(string command, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellationToken, IProgress<UploadProgressInfo> progress = null)
@@ -230,7 +227,6 @@ namespace CoreTweet.Rest
             return this.UploadAppendCommandAsyncImpl(parameters, cancellationToken, progress);
         }
 
-#if FILEINFO
         /// <summary>
         /// <para>Upload(s) of chunked data.</para>
         /// </summary>
@@ -248,7 +244,6 @@ namespace CoreTweet.Rest
             parameters.Add("media", media);
             return this.UploadAppendCommandAsyncImpl(parameters, cancellationToken, progress);
         }
-#endif
         #endregion
 
         private Task<UploadFinalizeCommandResult> UploadFinalizeCommandAsyncImpl(IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellationToken)
@@ -745,4 +740,3 @@ namespace CoreTweet.Rest
         #endregion
     }
 }
-#endif

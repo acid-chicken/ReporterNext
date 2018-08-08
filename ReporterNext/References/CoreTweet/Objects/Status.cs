@@ -521,10 +521,7 @@ namespace CoreTweet
     /// Represents a collection of Tweets.
     /// </summary>
     [JsonObject]
-    public class SearchResult : CoreBase, IEnumerable<Status>, ITwitterResponse
-#if !(NET35 || NET40)
-    , IReadOnlyList<Status>
-#endif
+    public class SearchResult : CoreBase, IEnumerable<Status>, ITwitterResponse, IReadOnlyList<Status>
     {
         [JsonProperty("statuses")]
         private List<Status> statuses { get; set; }
@@ -603,10 +600,7 @@ namespace CoreTweet
     /// Represents a collection of Tweets.
     /// </summary>
     [JsonObject]
-    public class PremiumSearchResult : CoreBase, IEnumerable<Status>, ITwitterResponse
-#if !(NET35 || NET40)
-    , IReadOnlyList<Status>
-#endif
+    public class PremiumSearchResult : CoreBase, IEnumerable<Status>, ITwitterResponse, IReadOnlyList<Status>
     {
         [JsonProperty("results")]
         private List<Status> results { get; set; }
@@ -664,10 +658,7 @@ namespace CoreTweet
     /// Represents a collection of Tweet counts.
     /// </summary>
     [JsonObject]
-    public class PremiumSearchCountResult : CoreBase, IEnumerable<CountPeriod>, ITwitterResponse
-#if !(NET35 || NET40)
-    , IReadOnlyList<CountPeriod>
-#endif
+    public class PremiumSearchCountResult : CoreBase, IEnumerable<CountPeriod>, ITwitterResponse, IReadOnlyList<CountPeriod>
     {
         [JsonProperty("results")]
         private List<CountPeriod> results { get; set; }

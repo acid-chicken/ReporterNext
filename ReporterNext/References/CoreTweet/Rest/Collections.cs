@@ -78,37 +78,5 @@ namespace CoreTweet.Rest
                 Json = res.Json
             };
         }
-
-#if SYNC
-        private CollectionsApiResult AccessApi(MethodType type, string apiName, IEnumerable<KeyValuePair<string, object>> parameters)
-        {
-            return this.Tokens.AccessApiImpl<CollectionsApiResult>(type, "collections/" + apiName, parameters, "");
-        }
-
-        private CollectionsListResult ListImpl(IEnumerable<KeyValuePair<string, object>> parameters)
-        {
-            return ToCollectionsListResult(this.AccessApi(MethodType.Get, "list", parameters));
-        }
-
-        private TimelineResponse ShowImpl(IEnumerable<KeyValuePair<string, object>> parameters)
-        {
-            return ToTimelineResponse(this.AccessApi(MethodType.Get, "show", parameters));
-        }
-
-        private CollectionEntriesResult EntriesImpl(IEnumerable<KeyValuePair<string, object>> parameters)
-        {
-            return ToCollectionEntriesResult(this.AccessApi(MethodType.Get, "entries", parameters));
-        }
-
-        private TimelineResponse CreateImpl(IEnumerable<KeyValuePair<string, object>> parameters)
-        {
-            return ToTimelineResponse(this.AccessApi(MethodType.Post, "create", parameters));
-        }
-
-        private TimelineResponse UpdateImpl(IEnumerable<KeyValuePair<string, object>> parameters)
-        {
-            return ToTimelineResponse(this.AccessApi(MethodType.Post, "update", parameters));
-        }
-#endif
     }
 }

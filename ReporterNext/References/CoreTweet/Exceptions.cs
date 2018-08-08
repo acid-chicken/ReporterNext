@@ -26,13 +26,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using CoreTweet.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-
-#if ASYNC
-using System.Threading.Tasks;
-#endif
 
 namespace CoreTweet
 {
@@ -133,7 +130,6 @@ namespace CoreTweet
             return new TwitterException(statusCode, requestUri, ParseErrors(json), rateLimit, json, ex);
         }
 
-#if ASYNC
         /// <summary>
         /// Create a <see cref="TwitterException"/> instance from the <see cref="AsyncResponse"/>.
         /// </summary>
@@ -156,31 +152,6 @@ namespace CoreTweet
                 return null;
             }
         }
-#endif
-
-#if SYNC
-        /// <summary>
-        /// Create a <see cref="TwitterException"/> instance from the <see cref="WebException"/>.
-        /// </summary>
-        /// <param name="ex">The thrown <see cref="WebException"/>.</param>
-        /// <returns><see cref="TwitterException"/> instance or null.</returns>
-        public static TwitterException Create(WebException ex)
-        {
-            try
-            {
-                var response = ex.Response as HttpWebResponse;
-                if(response == null)
-                    return null;
-
-                using(var sr = new StreamReader(response.GetResponseStream()))
-                    return Create(sr.ReadToEnd(), response.StatusCode, response.ResponseUri, ex, InternalUtils.ReadRateLimit(response));
-            }
-            catch
-            {
-                return null;
-            }
-        }
-#endif
     }
 
     /// <summary>

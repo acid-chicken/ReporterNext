@@ -33,11 +33,8 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using CoreTweet.Rest;
-
-#if ASYNC
 using System.Threading;
 using System.Threading.Tasks;
-#endif
 
 namespace CoreTweet.Core
 {
@@ -50,21 +47,13 @@ namespace CoreTweet.Core
             var ie = t as IEnumerable<KeyValuePair<string, object>>;
             if(ie != null) return ie;
 
-#if NETCORE
             var type = t.GetType().GetTypeInfo();
-#else
-            var type = t.GetType();
-#endif
 
             if(type.GetCustomAttributes(typeof(TwitterParametersAttribute), false).Any())
             {
                 var d = new Dictionary<string, object>();
 
-#if NETCORE
                 foreach(var f in type.DeclaredFields.Where(x => x.IsPublic && !x.IsStatic))
-#else
-                foreach(var f in type.GetFields(BindingFlags.Instance | BindingFlags.Public))
-#endif
                 {
                     var attr = f.GetCustomAttributes(true).OfType<TwitterParameterAttribute>().FirstOrDefault();
                     var value = f.GetValue(t);
@@ -76,11 +65,7 @@ namespace CoreTweet.Core
                     }
                 }
 
-#if NETCORE
                 foreach(var p in type.DeclaredProperties.Where(x => x.CanRead && x.GetMethod.IsPublic && !x.GetMethod.IsStatic))
-#else
-                foreach(var p in type.GetProperties(BindingFlags.Instance | BindingFlags.Public).Where(x => x.CanRead))
-#endif
                 {
                     var attr = p.GetCustomAttributes(true).OfType<TwitterParameterAttribute>().FirstOrDefault();
                     var value = p.GetValue(t, null);
@@ -102,17 +87,10 @@ namespace CoreTweet.Core
                 var elements = ienumerable.Cast<object>();
                 var ieElementTypes =
                     type.GetInterfaces()
-#if NETCORE
                     .Select(IntrospectionExtensions.GetTypeInfo)
-#endif
                     .Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-#if NETCORE
                     .Select(x => x.GenericTypeArguments[0].GetTypeInfo())
                     .Where(x => x.IsGenericType && x.GenericTypeArguments[0] == typeof(string));
-#else
-                    .Select(x => x.GetGenericArguments()[0])
-                    .Where(x => x.IsGenericType && x.GetGenericArguments()[0] == typeof(string));
-#endif
                 foreach(var genericElement in ieElementTypes)
                 {
                     var genericTypeDefinition = genericElement.GetGenericTypeDefinition();
@@ -125,7 +103,6 @@ namespace CoreTweet.Core
                             getValue.Invoke(x, null)
                         ));
                     }
-#if !NET35
                     if(genericTypeDefinition == typeof(Tuple<,>))
                     {
                         var getItem1 = genericElement.GetProperty("Item1").GetGetMethod();
@@ -135,11 +112,9 @@ namespace CoreTweet.Core
                             getItem2.Invoke(x, null)
                         ));
                     }
-#endif
                 }
             }
 
-#if !NET35
             // Tuple<Tuple<string, Any>, Tuple<string, Any>, ...>
             if (type.FullName.StartsWith("System.Tuple`", StringComparison.Ordinal))
             {
@@ -150,13 +125,8 @@ namespace CoreTweet.Core
                     {
                         var xtype = x.GetType();
                         return new KeyValuePair<string, object>(
-#if NETCORE
                             (string)xtype.GetRuntimeProperty("Item1").GetValue(x),
                             xtype.GetRuntimeProperty("Item2").GetValue(x)
-#else
-                            (string)xtype.GetProperty("Item1").GetValue(x, null),
-                            xtype.GetProperty("Item2").GetValue(x, null)
-#endif
                         );
                     });
                 }
@@ -165,38 +135,25 @@ namespace CoreTweet.Core
                     return ResolveObject(items);
                 }
             }
-#endif
 
             return AnnoToDictionary(t);
         }
 
         private static IDictionary<string,object> AnnoToDictionary(object f)
         {
-#if NETCORE
             return f.GetType().GetRuntimeProperties()
                 .Where(x => x.CanRead && x.GetIndexParameters().Length == 0)
                 .Select(x => Tuple.Create(x.Name, x.GetMethod))
                 .Where(x => x.Item2.IsPublic && !x.Item2.IsStatic)
                 .ToDictionary(x => x.Item1, x => x.Item2.Invoke(f, null));
-#else
-            return f.GetType().GetProperties()
-                .Where(x => x.CanRead && x.GetIndexParameters().Length == 0)
-                .ToDictionary(x => x.Name, x => x.GetValue(f, null));
-#endif
         }
 
-#if !NET35
         private static IEnumerable<object> EnumerateTupleItems(object tuple)
         {
             while(true)
             {
-#if NETCORE
                 var type = tuple.GetType().GetTypeInfo();
                 var props = type.DeclaredProperties;
-#else
-                var type = tuple.GetType();
-                var props = type.GetProperties();
-#endif
 
                 foreach(var p in props.Where(x => x.Name.StartsWith("Item", StringComparison.Ordinal)).OrderBy(x => x.Name))
                     yield return p.GetValue(tuple, null);
@@ -207,7 +164,6 @@ namespace CoreTweet.Core
                     break;
             }
         }
-#endif
 
         private static object GetExpressionValue(Expression<Func<string,object>> expr)
         {
@@ -218,9 +174,7 @@ namespace CoreTweet.Core
         private static object GetDefaultValue(Type type)
         {
             return type
-#if NETCORE
                 .GetTypeInfo()
-#endif
                 .IsValueType ? Activator.CreateInstance(type) : null;
         }
 
@@ -277,11 +231,7 @@ namespace CoreTweet.Core
             if (type.Name == "FSharpOption`1")
             {
                 return FormatValueForJson(
-#if NETCORE
                     type.GetRuntimeProperty("Value").GetValue(value)
-#else
-                    type.GetProperty("Value").GetValue(value, null)
-#endif
                 );
             }
 
@@ -365,11 +315,7 @@ namespace CoreTweet.Core
             if (type.Name == "FSharpOption`1")
             {
                 return FormatObjectForParameter(
-#if NETCORE
                     type.GetRuntimeProperty("Value").GetValue(x)
-#else
-                    type.GetProperty("Value").GetValue(x, null)
-#endif
                 );
             }
 
@@ -420,24 +366,6 @@ namespace CoreTweet.Core
         private const string XRateLimitRemaining = "x-rate-limit-remaining";
         private const string XRateLimitReset = "x-rate-limit-reset";
 
-#if SYNC
-        internal static RateLimit ReadRateLimit(HttpWebResponse response)
-        {
-            var limit = response.Headers[XRateLimitLimit];
-            var remaining = response.Headers[XRateLimitRemaining];
-            var reset = response.Headers[XRateLimitReset];
-            return limit != null && remaining != null && reset != null
-                ? new RateLimit()
-                {
-                    Limit = int.Parse(limit, NumberFormatInfo.InvariantInfo),
-                    Remaining = int.Parse(remaining, NumberFormatInfo.InvariantInfo),
-                    Reset = GetUnixTime(long.Parse(reset, NumberFormatInfo.InvariantInfo))
-                }
-                : null;
-        }
-#endif
-
-#if ASYNC
         internal static RateLimit ReadRateLimit(AsyncResponse response)
         {
             if(!new[] { XRateLimitLimit, XRateLimitRemaining, XRateLimitReset }
@@ -454,61 +382,12 @@ namespace CoreTweet.Core
                 Reset = GetUnixTime(long.Parse(reset, NumberFormatInfo.InvariantInfo))
             };
         }
-#endif
 
         private static KeyValuePair<string, object> GetReservedParameter(List<KeyValuePair<string, object>> parameters, string reserved)
         {
             return parameters.Single(kvp => kvp.Key == reserved);
         }
 
-#if SYNC
-        internal static T ReadResponse<T>(HttpWebResponse response, string jsonPath)
-        {
-            using(var sr = new StreamReader(response.GetResponseStream()))
-            {
-                var json = sr.ReadToEnd();
-                var result = CoreBase.Convert<T>(json, jsonPath);
-                var twitterResponse = result as ITwitterResponse;
-                if(twitterResponse != null)
-                {
-                    twitterResponse.RateLimit = ReadRateLimit(response);
-                    twitterResponse.Json = json;
-                }
-                return result;
-            }
-        }
-
-        /// <summary>
-        /// id, slug, etc
-        /// </summary>
-        internal static T AccessParameterReservedApi<T>(this TokensBase t, MethodType m, string uri, IEnumerable<string> reserveds, IEnumerable<KeyValuePair<string, object>> parameters)
-        {
-            if (parameters == null) throw new ArgumentNullException(nameof(parameters));
-            var list = parameters.ToList();
-            var replaced = reserveds.Select(reserved =>
-            {
-                var kvp = GetReservedParameter(list, reserved);
-                list.Remove(kvp);
-                return kvp;
-            }).Aggregate(uri, (acc, kvp) => acc.Replace(string.Format("{{{0}}}", kvp.Key), kvp.Value.ToString()));
-            return t.AccessApiImpl<T>(m, replaced, list, "");
-        }
-
-        internal static ListedResponse<T> AccessParameterReservedApiArray<T>(this TokensBase t, MethodType m, string uri, IEnumerable<string> reserveds, IEnumerable<KeyValuePair<string, object>> parameters)
-        {
-            if (parameters == null) throw new ArgumentNullException(nameof(parameters));
-            var list = parameters.ToList();
-            var replaced = reserveds.Select(reserved =>
-            {
-                var kvp = GetReservedParameter(list, reserved);
-                list.Remove(kvp);
-                return kvp;
-            }).Aggregate(uri, (acc, kvp) => acc.Replace(string.Format("{{{0}}}", kvp.Key), kvp.Value.ToString()));
-            return t.AccessApiArrayImpl<T>(m, replaced, list, "");
-        }
-#endif
-
-#if ASYNC
         internal static Task<T> AccessParameterReservedApiAsync<T>(this TokensBase t, MethodType m, string uri, IEnumerable<string> reserveds, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellationToken)
         {
             if(parameters == null) throw new ArgumentNullException(nameof(parameters));
@@ -571,6 +450,5 @@ namespace CoreTweet.Core
                 }
             }
         }
-#endif
     }
 }

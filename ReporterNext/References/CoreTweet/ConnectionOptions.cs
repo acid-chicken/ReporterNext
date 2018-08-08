@@ -23,10 +23,7 @@
 
 using System;
 using System.Net;
-
-#if ASYNC
 using System.Net.Http;
-#endif
 
 namespace CoreTweet
 {
@@ -34,9 +31,6 @@ namespace CoreTweet
     /// Properties for requesting.
     /// </summary>
     public class ConnectionOptions
-#if !NETCORE
-        : ICloneable
-#endif
     {
         internal static readonly ConnectionOptions Default = new ConnectionOptions();
 
@@ -51,18 +45,6 @@ namespace CoreTweet
         /// <para>Default: <c>"https://upload.twitter.com"</c></para>
         /// </summary>
         public string UploadUrl { get; set; } = "https://upload.twitter.com";
-
-        /// <summary>
-        /// Gets or sets the URL of User Streams API.
-        /// <para>Default: <c>"https://userstream.twitter.com"</c></para>
-        /// </summary>
-        public string UserStreamUrl { get; set; } = "https://userstream.twitter.com";
-
-        /// <summary>
-        /// Gets or sets the URL of Site Streams API.
-        /// <para>Default: <c>"https://sitestream.twitter.com"</c></para>
-        /// </summary>
-        public string SiteStreamUrl { get; set; } = "https://sitestream.twitter.com";
 
         /// <summary>
         /// Gets or sets the URL of Public Streams API.
@@ -93,27 +75,6 @@ namespace CoreTweet
                 this.timeout = value;
             }
         }
-
-#if SYNC
-        private int readWriteTimeout = 300000;
-        /// <summary>
-        /// Gets or sets a time-out in milliseconds when writing to or reading from a stream.
-        /// This value will be applied to only sync API methods.
-        /// </summary>
-        public int ReadWriteTimeout
-        {
-            get
-            {
-                return this.readWriteTimeout;
-            }
-            set
-            {
-                if(value <= 0 && value != System.Threading.Timeout.Infinite)
-                    throw new ArgumentOutOfRangeException();
-                this.readWriteTimeout = value;
-            }
-        }
-#endif
 
         /// <summary>
         /// Gets or sets a value that indicates whether the handler uses a proxy for requests.
@@ -155,14 +116,9 @@ namespace CoreTweet
             {
                 ApiUrl = this.ApiUrl,
                 UploadUrl = this.UploadUrl,
-                UserStreamUrl = this.UserStreamUrl,
-                SiteStreamUrl = this.SiteStreamUrl,
                 StreamUrl = this.StreamUrl,
                 ApiVersion = this.ApiVersion,
                 Timeout = this.Timeout,
-#if SYNC
-                ReadWriteTimeout = this.ReadWriteTimeout,
-#endif
                 UseProxy = this.UseProxy,
                 Proxy = this.Proxy,
                 UserAgent = this.UserAgent,
@@ -172,7 +128,6 @@ namespace CoreTweet
             };
         }
 
-#if ASYNC
         private HttpClient httpClient;
         private HttpClientHandler handler;
 
@@ -201,6 +156,5 @@ namespace CoreTweet
 
             return this.httpClient;
         }
-#endif
     }
 }

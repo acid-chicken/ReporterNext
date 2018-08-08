@@ -21,7 +21,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if ASYNC
 using System;
 using System.IO;
 using System.Net;
@@ -130,39 +129,6 @@ namespace CoreTweet.Core
                 this.Report(1);
             }
 
-#if !NETCORE
-            private sealed class ProgressStreamAsyncResult : IAsyncResult
-            {
-                public IAsyncResult InnerAsyncResult { get; set; }
-                public int ByteCount { get; set; }
-
-                public object AsyncState => this.InnerAsyncResult.AsyncState;
-                public WaitHandle AsyncWaitHandle => this.InnerAsyncResult.AsyncWaitHandle;
-                public bool CompletedSynchronously => this.InnerAsyncResult.CompletedSynchronously;
-                public bool IsCompleted => this.InnerAsyncResult.IsCompleted;
-            }
-
-            public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-            {
-                var ar = new ProgressStreamAsyncResult() { ByteCount = count };
-                ar.InnerAsyncResult = this.innerStream.BeginWrite(buffer, offset, count, x =>
-                {
-                    ar.InnerAsyncResult = x;
-                    callback(ar);
-                }, state);
-                return ar;
-            }
-
-            public override void EndWrite(IAsyncResult asyncResult)
-            {
-                var ar = asyncResult as ProgressStreamAsyncResult;
-                if (ar == null) throw new ArgumentException();
-
-                this.innerStream.EndWrite(ar.InnerAsyncResult);
-                this.Report(ar.ByteCount);
-            }
-#endif
-
             public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
             {
                 return this.innerStream.WriteAsync(buffer, offset, count, cancellationToken)
@@ -172,4 +138,3 @@ namespace CoreTweet.Core
         }
     }
 }
-#endif

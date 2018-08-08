@@ -20,22 +20,3 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-#if SYNC
-using System.Collections.Generic;
-using CoreTweet.Core;
-
-namespace CoreTweet.Rest
-{
-    partial class MediaMetadata : ApiProviderBase
-    {
-        private void CreateImpl(IEnumerable<KeyValuePair<string, object>> parameters, string[] jsonMap)
-        {
-            var options = this.Tokens.ConnectionOptions ?? ConnectionOptions.Default;
-            this.Tokens
-                .SendJsonRequest(InternalUtils.GetUrl(options, options.UploadUrl, true, "media/metadata/create.json"), parameters, jsonMap)
-                .Close();
-        }
-    }
-}
-#endif

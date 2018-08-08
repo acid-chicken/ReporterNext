@@ -21,7 +21,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if ASYNC
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -67,4 +66,3 @@ namespace CoreTweet.Rest
         }
     }
 }
-#endif
