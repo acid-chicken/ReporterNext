@@ -1,0 +1,3 @@
+[submodule "submodules/CoreTweet"]
+	path = submodules/CoreTweet
+	url = https://github.com/acid-chicken/CoreTweet
