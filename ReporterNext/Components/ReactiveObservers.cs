@@ -47,8 +47,7 @@ namespace ReporterNext.Components
     {
         public static IServiceCollection AddReactiveInterface(this IServiceCollection services)
         {
-            var factory = new EventObservableFactory();
-            services.AddSingleton(factory);
+            services.AddSingleton(new EventObservableFactory());
 
             return services;
         }

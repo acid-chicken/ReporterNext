@@ -50,6 +50,7 @@ namespace ReporterNext
             services.AddSingleton<CRC>(new CRC(KeyedHashAlgorithm.Create("HMACSHA256"), Configuration["Twitter:ConsumerSecret"]));
             services.AddHangfire(configuration =>
                 configuration.UseRedisStorage(Redis));
+            services.AddReactiveInterface();
             services.AddTwitter(Configuration["Twitter:ConsumerKey"],
                     Configuration["Twitter:ConsumerSecret"],
                     Configuration["Twitter:AccessToken"],
