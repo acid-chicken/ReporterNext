@@ -28,17 +28,14 @@ namespace ReporterNext.Components
 
         public void OnNext(TweetCreateEvent value)
         {
-            if (value.Target.IsQuotedStatus ?? false)
+            var nullableId = value.Target.QuotedStatusId ?? value.Target.QuotedStatus?.Id;
+            if (nullableId is long id)
             {
-                var nullableId = value.Target.QuotedStatusId ?? value.Target.QuotedStatus?.Id;
-                if (nullableId is long id)
-                {
-                    BackgroundJob.Enqueue(() => _tokens.Statuses.UpdateAsync(
-                        status => $"ツイート時刻：{id.ToSnowflake():HH:mm:ss.fff}",
-                        in_reply_to_status_id => id,
-                        auto_populate_reply_metadata => true,
-                        tweet_mode => TweetMode.Extended));
-                }
+                BackgroundJob.Enqueue(() => _tokens.Statuses.UpdateAsync(
+                    status => $"ツイート時刻：{id.ToSnowflake():HH:mm:ss.fff}",
+                    in_reply_to_status_id => id,
+                    auto_populate_reply_metadata => true,
+                    tweet_mode => TweetMode.Extended));
             }
         }
     }
