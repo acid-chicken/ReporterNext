@@ -52,11 +52,12 @@ namespace ReporterNext.Components
 
         public static IApplicationBuilder UseReactiveInterface(this IApplicationBuilder app, long forUserId = default)
         {
+            var undisposings = app.ApplicationServices.GetService<UndisposingObjectCollection>();
             var tokens = app.ApplicationServices.GetService<Tokens>();
             var factory = app.ApplicationServices.GetService<EventObservableFactory>();
             var replyObserver = new ReplyQuotedTimeObserver(forUserId, tokens);
-            factory.Create<TweetCreateEvent>(forUserId)
-                .Subscribe(replyObserver);
+            undisposings.Add(factory.Create<TweetCreateEvent>(forUserId)
+                .Subscribe(replyObserver));
 
             return app;
         }

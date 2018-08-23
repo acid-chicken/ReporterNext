@@ -17,6 +17,7 @@ namespace ReporterNext.Components
 
         public void Execute(T content)
         {
+            BackgroundJob.Enqueue(() => Console.WriteLine(_observers));
             foreach (var observer in _observers)
                 BackgroundJob.Enqueue(() => observer.OnNext(content));
         }

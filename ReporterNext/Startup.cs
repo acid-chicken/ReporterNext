@@ -47,6 +47,7 @@ namespace ReporterNext
         {
             var accessTokenUserId = GetAccessTokenUserId();
             services.AddSingleton<IConfiguration>(Configuration);
+            services.AddSingleton<UndisposingObjectCollection>();
             services.AddSingleton<CRC>(new CRC(KeyedHashAlgorithm.Create("HMACSHA256"), Configuration["Twitter:ConsumerSecret"]));
             services.AddHangfire(configuration =>
                 configuration.UseRedisStorage(Redis));
