@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <PackageReference Include="HangFire" Version="1.6.20" />
-    <PackageReference Include="HangFire.LiteDB" Version="0.1.0" />
     <PackageReference Include="LiteDB" Version="4.1.4" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.2" />
     <PackageReference Include="SkiaSharp" Version="1.60.2" />
