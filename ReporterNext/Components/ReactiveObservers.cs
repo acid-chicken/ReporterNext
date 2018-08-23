@@ -33,7 +33,7 @@ namespace ReporterNext.Components
             {
                 BackgroundJob.Enqueue(() => _tokens.Statuses.UpdateAsync(
                     status => $"ツイート時刻：{id.ToSnowflake():HH:mm:ss.fff}",
-                    in_reply_to_status_id => id,
+                    in_reply_to_status_id => value.Target.Id,
                     auto_populate_reply_metadata => true,
                     tweet_mode => TweetMode.Extended));
             }
