@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CoreTweet;
+using Hangfire;
 using ReporterNext.Models;
 
 namespace ReporterNext.Components
@@ -14,8 +15,11 @@ namespace ReporterNext.Components
 
         private bool disposedValue = false;
 
-        public Task Execute(T content) =>
-            Task.WhenAll(_observers.Select(x => Task.Run(() => x.OnNext(content))));
+        public void Execute(T content)
+        {
+            foreach (var observer in _observers)
+                BackgroundJob.Enqueue(() => observer.OnNext(content));
+        }
 
         public IDisposable Subscribe(IObserver<T> observer)
         {

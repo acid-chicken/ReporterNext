@@ -30,7 +30,7 @@ namespace ReporterNext.Components
         {
             if (value.Target.IsQuotedStatus ?? false)
             {
-                var nullableId = value.Target.QuotedStatusId;
+                var nullableId = value.Target.QuotedStatusId ?? value.Target.QuotedStatus?.Id;
                 if (nullableId is long id)
                 {
                     BackgroundJob.Enqueue(() => _tokens.Statuses.UpdateAsync(
@@ -53,11 +53,9 @@ namespace ReporterNext.Components
         }
 
 
-        public static IApplicationBuilder UseReactiveInterface(this IApplicationBuilder app, long forUserId = default, Tokens tokens = default)
+        public static IApplicationBuilder UseReactiveInterface(this IApplicationBuilder app, long forUserId = default)
         {
-            if (tokens is null)
-                tokens = app.ApplicationServices.GetService<Tokens>();
-
+            var tokens = app.ApplicationServices.GetService<Tokens>();
             var factory = app.ApplicationServices.GetService<EventObservableFactory>();
             var replyObserver = new ReplyQuotedTimeObserver(forUserId, tokens);
             factory.Create<TweetCreateEvent>(forUserId)
