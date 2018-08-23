@@ -15,7 +15,7 @@
     <PackageReference Include="HangFire.Redis.StackExchange" Version="1.7.2" />
     <PackageReference Include="LiteDB" Version="4.1.4" />
     <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.2" />
-    <PackageReference Include="SkiaSharp" Version="1.60.2" />
+    <PackageReference Include="SkiaSharp" Version="1.60.3" />
   </ItemGroup>
 
 </Project>
