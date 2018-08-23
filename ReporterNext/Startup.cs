@@ -22,6 +22,13 @@ namespace ReporterNext
 {
     public class Startup
     {
+        private readonly static IEnumerable<string> _immutableExtensions = new []
+        {
+            ".otf",
+            ".woff",
+            ".woff2"
+        };
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -76,6 +83,20 @@ namespace ReporterNext
             });
             app.UseReactiveInterface(Configuration.GetValue("Twitter:ForUserId", GetAccessTokenUserId()));
 
+            app.UseDefaultFiles();
+            app.UseStaticFiles(new StaticFileOptions()
+            {
+                OnPrepareResponse = x =>
+                {
+                    x.Context.Response.Headers.Append("Cache-Control", $"public, max-age={(env.IsDevelopment() ? "600" : "604800")}{(_immutableExtensions.Any(y => x.File.Name.EndsWith(y)) ? ", immutable" : "")}");
+                }
+            });
+
+            app.UseFileServer(new FileServerOptions()
+            {
+                RequestPath = "/wwwroot",
+                EnableDirectoryBrowsing = env.IsDevelopment()
+            });
             app.UseMvc(routes =>
                 routes.MapRoute("default", "{controller=Status}/{action=Index}"));
         }
