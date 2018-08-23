@@ -30,13 +30,15 @@ namespace ReporterNext.Components
         {
             if (value.Target.IsQuotedStatus ?? false)
             {
-                var id = value.Target.QuotedStatusId;
-                if (!(id is null))
+                var nullableId = value.Target.QuotedStatusId;
+                if (nullableId is long id)
+                {
                     BackgroundJob.Enqueue(() => _tokens.Statuses.UpdateAsync(
-                        status => $"",
+                        status => $"ツイート時刻：{id.ToSnowflake():HH:mm:ss.fff}",
                         in_reply_to_status_id => id,
                         auto_populate_reply_metadata => true,
                         tweet_mode => TweetMode.Extended));
+                }
             }
         }
     }
