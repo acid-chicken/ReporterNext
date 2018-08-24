@@ -9,6 +9,8 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using ReporterNext.Components;
 
 namespace ReporterNext
 {
@@ -16,12 +18,31 @@ namespace ReporterNext
     {
         public static void Main(string[] args)
         {
-            CultureInfo.CurrentCulture =
-            CultureInfo.CurrentUICulture =
-            Thread.CurrentThread.CurrentCulture =
-            Thread.CurrentThread.CurrentUICulture =
-            CultureInfo.DefaultThreadCurrentCulture =
-            CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
+            #region CultureInfo
+            {
+                CultureInfo.CurrentCulture =
+                CultureInfo.CurrentUICulture =
+                Thread.CurrentThread.CurrentCulture =
+                Thread.CurrentThread.CurrentUICulture =
+                CultureInfo.DefaultThreadCurrentCulture =
+                CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
+            }
+            #endregion
+
+            #region JsonSerializerSettings
+            {
+                var defaultSettings = JsonConvert.DefaultSettings;
+                JsonSerializerSettings func()
+                {
+                    var settings = defaultSettings();
+                    if (!settings.Converters.Any(x => x.GetType() == typeof(EventConverter)))
+                        settings.Converters.Add(new EventConverter());
+                    return settings;
+                };
+                JsonConvert.DefaultSettings = func;
+            }
+            #endregion
+
             CreateWebHostBuilder(args).Build().Run();
         }
 
