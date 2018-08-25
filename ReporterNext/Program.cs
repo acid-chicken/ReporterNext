@@ -29,22 +29,6 @@ namespace ReporterNext
             }
             #endregion
 
-            #region JsonSerializerSettings
-            {
-                var defaultSettings = JsonConvert.DefaultSettings;
-                JsonSerializerSettings func()
-                {
-                    var settings = defaultSettings is null ?
-                        new JsonSerializerSettings() :
-                        defaultSettings();
-                    if (!settings.Converters.Any(x => x.GetType() == typeof(EventConverter)))
-                        settings.Converters.Add(new EventConverter());
-                    return settings;
-                };
-                JsonConvert.DefaultSettings = func;
-            }
-            #endregion
-
             CreateWebHostBuilder(args).Build().Run();
         }
 
