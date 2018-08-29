@@ -7,8 +7,12 @@ using Newtonsoft.Json;
 
 namespace ReporterNext.Models
 {
-    public abstract class Event
+    public class Event
     {
+        private Event()
+        {
+        }
+
         public DateTimeOffset CreatedAt { get; set; }
     }
 
@@ -271,8 +275,12 @@ namespace ReporterNext.Models
         public User User { get; set; }
     }
 
-    public abstract class UserToUserEvent : Event
+    public class UserToUserEvent : Event
     {
+        private UserToUserEvent()
+        {
+        }
+
         public User Source { get; set; }
 
         public User Target { get; set; }
