@@ -9,10 +9,6 @@ namespace ReporterNext.Models
 {
     public class Event
     {
-        private Event()
-        {
-        }
-
         public DateTimeOffset CreatedAt { get; set; }
     }
 
@@ -277,10 +273,6 @@ namespace ReporterNext.Models
 
     public class UserToUserEvent : Event
     {
-        private UserToUserEvent()
-        {
-        }
-
         public User Source { get; set; }
 
         public User Target { get; set; }
