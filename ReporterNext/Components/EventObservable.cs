@@ -17,7 +17,6 @@ namespace ReporterNext.Components
 
         public void Execute(T content)
         {
-            BackgroundJob.Enqueue(() => Console.WriteLine(_observers));
             foreach (var observer in _observers)
                 BackgroundJob.Enqueue(() => observer.OnNext(content));
         }
@@ -61,7 +60,7 @@ namespace ReporterNext.Components
             {
                 if (disposing)
                 {
-                    Task.WhenAll(_observers.Select(x => Task.Run(() => x.OnCompleted()))).GetAwaiter().GetResult();
+                    Task.WaitAll(_observers.Select(x => Task.Run(() => x.OnCompleted())).ToArray());
                 }
 
                 disposedValue = true;

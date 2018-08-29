@@ -43,11 +43,48 @@ namespace ReporterNext.Components
         }
     }
 
+    public class EventObserver : IObserver<Event>
+    {
+        private long _forUserId;
+        private EventObservableFactory _factory;
+
+        public EventObserver(long forUserId, EventObservableFactory factory)
+        {
+            _forUserId = forUserId;
+            _factory = factory;
+        }
+
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error)
+        {
+        }
+
+        public void OnNext(Event value)
+        {
+            switch (value)
+            {
+                case TweetCreateEvent x: _factory.Create<TweetCreateEvent>(_forUserId).Execute(x); break;
+                case FavoriteEvent x: _factory.Create<FavoriteEvent>(_forUserId).Execute(x); break;
+                case FollowEvent x: _factory.Create<FollowEvent>(_forUserId).Execute(x); break;
+                case BlockEvent x: _factory.Create<BlockEvent>(_forUserId).Execute(x); break;
+                case MuteEvent x: _factory.Create<MuteEvent>(_forUserId).Execute(x); break;
+                case UserRevokeEvent x: _factory.Create<UserRevokeEvent>(_forUserId).Execute(x); break;
+                case DirectMessageEvent x: _factory.Create<DirectMessageEvent>(_forUserId).Execute(x); break;
+                case DirectMessageIndicateTypingEvent x: _factory.Create<DirectMessageIndicateTypingEvent>(_forUserId).Execute(x); break;
+                case DirectMessageMarkReadEvent x: _factory.Create<DirectMessageMarkReadEvent>(_forUserId).Execute(x); break;
+                case TweetDeleteEvent x: _factory.Create<TweetDeleteEvent>(_forUserId).Execute(x); break;
+            }
+        }
+    }
+
     public static partial class ServiceCollectionServiceExtensions
     {
         public static IServiceCollection AddReactiveInterface(this IServiceCollection services)
         {
-            services.AddSingleton(new EventObservableFactory());
+            services.AddSingleton<EventObservableFactory>();
 
             return services;
         }
@@ -57,9 +94,12 @@ namespace ReporterNext.Components
             var undisposings = app.ApplicationServices.GetService<UndisposingObjectCollection>();
             var tokens = app.ApplicationServices.GetService<Tokens>();
             var factory = app.ApplicationServices.GetService<EventObservableFactory>();
+
             var replyObserver = new ReplyQuotedTimeObserver(forUserId, tokens);
-            undisposings.Add(factory.Create<TweetCreateEvent>(forUserId)
-                .Subscribe(replyObserver));
+            undisposings.Add(factory.Create<TweetCreateEvent>(forUserId).Subscribe(replyObserver));
+
+            var eventObserver = new EventObserver(forUserId, factory);
+            undisposings.Add(factory.Create<Event>(forUserId).Subscribe(eventObserver));
 
             return app;
         }
