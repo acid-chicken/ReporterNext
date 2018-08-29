@@ -9,7 +9,7 @@ using ReporterNext.Models;
 namespace ReporterNext.Components
 {
     public class EventObservable<T> : IObservable<T>, IDisposable
-        where T : IEvent
+        where T : Event
     {
         private readonly IList<IObserver<T>> _observers = new List<IObserver<T>>();
 

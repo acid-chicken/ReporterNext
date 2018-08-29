@@ -7,7 +7,7 @@ using ReporterNext.Models;
 
 namespace ReporterNext.Components
 {
-    public class ReplyQuotedTimeObserver : IObserver<TweetCreateEvent>, IObserver<IEvent>
+    public class ReplyQuotedTimeObserver : IObserver<TweetCreateEvent>, IObserver<Event>
     {
         private long _forUserId;
         private Tokens _tokens;
@@ -26,7 +26,7 @@ namespace ReporterNext.Components
         {
         }
 
-        public void OnNext(IEvent value) =>
+        public void OnNext(Event value) =>
             OnNext((TweetCreateEvent)value);
 
         public void OnNext(TweetCreateEvent value)

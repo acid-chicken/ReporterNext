@@ -7,22 +7,7 @@ using Newtonsoft.Json;
 
 namespace ReporterNext.Models
 {
-    public interface IEvent
-    {
-        DateTimeOffset CreatedAt { get; set; }
-    }
-
-    public interface ITargetEvent<T> : IEvent
-    {
-        T Target { get; set; }
-    }
-
-    public interface ISourceEvent<T> : IEvent
-    {
-        T Source { get; set; }
-    }
-
-    public abstract class Event : IEvent
+    public abstract class Event
     {
         public DateTimeOffset CreatedAt { get; set; }
     }
@@ -253,7 +238,7 @@ namespace ReporterNext.Models
                 Enumerable.Empty<Event>());
     }
 
-    public abstract class ToStatusEvent : Event, ITargetEvent<Status>
+    public abstract class ToStatusEvent : Event
     {
         public Status Target { get; set; }
     }
@@ -262,7 +247,7 @@ namespace ReporterNext.Models
     {
     }
 
-    public class FavoriteEvent : ToStatusEvent, ISourceEvent<User>
+    public class FavoriteEvent : ToStatusEvent
     {
         public User Source { get; set; }
     }
@@ -286,7 +271,7 @@ namespace ReporterNext.Models
         public User User { get; set; }
     }
 
-    public abstract class UserToUserEvent : Event, ITargetEvent<User>, ISourceEvent<User>
+    public abstract class UserToUserEvent : Event
     {
         public User Source { get; set; }
 
@@ -321,7 +306,7 @@ namespace ReporterNext.Models
         public TTarget Target { get; set; }
     }
 
-    public class UserRevokeEvent : Event, ITargetEvent<long>, ISourceEvent<long>
+    public class UserRevokeEvent : Event
     {
         public long Target { get; set; }
 
@@ -444,7 +429,7 @@ namespace ReporterNext.Models
         public string LastReadEventId { get; set; }
     }
 
-    public class TweetDeleteEvent : Event, ITargetEvent<long>, ISourceEvent<long>
+    public class TweetDeleteEvent : Event
     {
         public long Target { get; set; }
         public long Source { get; set; }
