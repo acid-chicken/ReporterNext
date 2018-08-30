@@ -76,8 +76,12 @@ namespace ReporterNext.Components
                 case DirectMessageIndicateTypingEvent x: _factory.Create<DirectMessageIndicateTypingEvent>(_forUserId).Execute(x); break;
                 case DirectMessageMarkReadEvent x: _factory.Create<DirectMessageMarkReadEvent>(_forUserId).Execute(x); break;
                 case TweetDeleteEvent x: _factory.Create<TweetDeleteEvent>(_forUserId).Execute(x); break;
+                default: UnknownEvent(nameof(value)); break;
             }
         }
+
+        private void UnknownEvent(string name) =>
+            throw new ArgumentException(name, "Argument cannot be an unknown event");
     }
 
     public static partial class ServiceCollectionServiceExtensions
@@ -95,11 +99,10 @@ namespace ReporterNext.Components
             var tokens = app.ApplicationServices.GetService<Tokens>();
             var factory = app.ApplicationServices.GetService<EventObservableFactory>();
 
-            var replyObserver = new ReplyQuotedTimeObserver(forUserId, tokens);
-            undisposings.Add(factory.Create<TweetCreateEvent>(forUserId).Subscribe(replyObserver));
-
-            var eventObserver = new EventObserver(forUserId, factory);
-            undisposings.Add(factory.Create<Event>(forUserId).Subscribe(eventObserver));
+            factory.Create<TweetCreateEvent>(forUserId)
+                .Subscribe(new ReplyQuotedTimeObserver(forUserId, tokens), true);
+            factory.Create<Event>(forUserId)
+                .Subscribe(new EventObserver(forUserId, factory), true);
 
             return app;
         }

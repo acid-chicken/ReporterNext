@@ -21,10 +21,12 @@ namespace ReporterNext.Components
                 BackgroundJob.Enqueue(() => observer.OnNext(content));
         }
 
-        public IDisposable Subscribe(IObserver<T> observer)
+        public IDisposable Subscribe(IObserver<T> observer, bool neverUnsubscribe = false)
         {
             _observers.Add(observer);
-            return new UnsubscribeOnDispose(_observers, observer);
+            return neverUnsubscribe ?
+                null :
+                new UnsubscribeOnDispose(_observers, observer);
         }
 
         private class UnsubscribeOnDispose : IDisposable

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -47,6 +47,7 @@ namespace ReporterNext
         {
             var accessTokenUserId = GetAccessTokenUserId();
             services.AddSingleton<IConfiguration>(Configuration);
+            services.AddSingleton<ConnectionMultiplexer>(Redis);
             services.AddSingleton<UndisposingObjectCollection>();
             services.AddSingleton<CRC>(new CRC(KeyedHashAlgorithm.Create("HMACSHA256"), Configuration["Twitter:ConsumerSecret"]));
             services.AddHangfire(configuration =>
