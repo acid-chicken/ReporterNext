@@ -44,5 +44,8 @@ namespace ReporterNext.Components
         public EventObservable<Event> Create<T>(long forUserId)
             where T : Event, new() =>
             GetOrCreate<T>(forUserId);
+
+        public EventObservable<Event> Create(long forUserId) =>
+            Create<Event>(forUserId);
     }
 }
