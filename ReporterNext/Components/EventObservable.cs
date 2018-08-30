@@ -29,6 +29,9 @@ namespace ReporterNext.Components
                 new UnsubscribeOnDispose(_observers, observer);
         }
 
+        public IDisposable Subscribe(IObserver<T> observer) =>
+            Subscribe(observer, false);
+
         private class UnsubscribeOnDispose : IDisposable
         {
             private readonly IList<IObserver<T>> _observers;
