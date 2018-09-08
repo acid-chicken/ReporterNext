@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using CoreTweet;
 using Hangfire;
@@ -37,16 +38,27 @@ namespace ReporterNext.Components
         public void OnNext(TweetCreateEvent value) =>
             BackgroundJob.Enqueue(() => JobAsync(_consumerKey, _consumerSecret, _accessToken, _accessTokenSecret, value));
 
-        public static Task JobAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, TweetCreateEvent @event) =>
-
-            ((@event.Target.QuotedStatusId ?? @event.Target.QuotedStatus?.Id) is long statusId &&
-                @event.Target.User.Id is long userId) ?
-                Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret).Statuses.UpdateAsync(
-                    status => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
-                    in_reply_to_status_id => statusId,
+        public static Task JobAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, TweetCreateEvent @event)
+        {
+            var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+            return
+                (@event.Target.QuotedStatusId ?? @event.Target.QuotedStatus?.Id) is long quotedId &&
+                    @event.Target.User.Id is long userId ?
+                    tokens.Statuses.UpdateAsync(
+                        status => $"ツイート時刻：{quotedId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
+                        in_reply_to_status_id => @event.Target.Id,
+                        auto_populate_reply_metadata => true,
+                        include_ext_alt_text => true,
+                        tweet_mode => TweetMode.Extended) :
+                @event.Target.InReplyToStatusId is long replyId ?
+                    tokens.Statuses.UpdateAsync(
+                        status => $"ツイート時刻：{replyId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
+                        in_reply_to_status_id => @event.Target.Id,
                     auto_populate_reply_metadata => true,
+                        include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended) :
                 Task.CompletedTask;
+    }
     }
 
     public class EventObserver : IObserver<EventObject>
