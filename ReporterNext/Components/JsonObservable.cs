@@ -16,7 +16,7 @@ namespace ReporterNext.Components
         public void Execute(EventObject content)
         {
             foreach (var observer in _observers)
-                BackgroundJob.Enqueue(() => observer.OnNext(content));
+                observer.OnNext(content);
         }
 
         public IDisposable Subscribe(IObserver<EventObject> observer, bool neverUnsubscribe = false)
