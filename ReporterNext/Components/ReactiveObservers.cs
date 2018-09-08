@@ -45,12 +45,10 @@ namespace ReporterNext.Components
 
     public class EventObserver : IObserver<EventObject>
     {
-        private long _forUserId;
         private EventObservableFactory _factory;
 
-        public EventObserver(long forUserId, EventObservableFactory factory)
+        public EventObserver(EventObservableFactory factory)
         {
-            _forUserId = forUserId;
             _factory = factory;
         }
 
@@ -65,7 +63,6 @@ namespace ReporterNext.Components
         public void OnNext(EventObject value)
         {
             var (forUserId, events) = value.Build();
-            if (forUserId == _forUserId)
             foreach (var @event in events)
             {
                 switch (@event)
@@ -108,7 +105,7 @@ namespace ReporterNext.Components
             factory.Create<TweetCreateEvent>(forUserId)
                 .Subscribe(new ReplyQuotedTimeObserver(forUserId, tokens), true);
 
-            json.Subscribe(new EventObserver(forUserId, factory), true);
+            json.Subscribe(new EventObserver(factory), true);
 
             return app;
         }
