@@ -8,28 +8,37 @@ using ReporterNext.Models;
 
 namespace ReporterNext.Components
 {
-    public class EventObservable<T> : IObservable<T>, IDisposable
-        where T : Event
+    public class EventObservable : IObservable<Event>, IDisposable
     {
-        private readonly IList<IObserver<T>> _observers = new List<IObserver<T>>();
+        private readonly IList<IObserver<Event>> _observers = new List<IObserver<Event>>();
 
         private bool disposedValue = false;
 
-        public void Execute(T content)
+        public void Execute<T>(T content, bool fallback = false)
+            where T : Event
+        {
+            foreach (var observer in _observers)
+                if (observer is IObserver<Event> x)
+                    x.OnNext(content);
+                else if (fallback)
+                    observer.OnNext(content);
+        }
+
+        public void Execute(Event content)
         {
             foreach (var observer in _observers)
                 observer.OnNext(content);
         }
 
-        public IDisposable Subscribe(IObserver<T> observer, bool neverUnsubscribe = false)
+        public IDisposable Subscribe(IObserver<Event> observer, bool neverUnsubscribe = false)
         {
             _observers.Add(observer);
             return neverUnsubscribe ?
                 null :
-                new UnsubscribeOnDispose<T>(_observers, observer);
+                new UnsubscribeOnDispose<Event>(_observers, observer);
         }
 
-        public IDisposable Subscribe(IObserver<T> observer) =>
+        public IDisposable Subscribe(IObserver<Event> observer) =>
             Subscribe(observer, false);
 
         protected virtual void Dispose(bool disposing)

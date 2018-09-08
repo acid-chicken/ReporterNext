@@ -12,6 +12,21 @@ namespace ReporterNext.Models
         public DateTimeOffset CreatedAt { get; set; }
     }
 
+    public enum EventType
+    {
+        TweetCreateEvent,
+        FavoriteEvent,
+        FollowEvent,
+        BlockEvent,
+        MuteEvent,
+        UserRevokeEvent,
+        DirectMessageEvent,
+        DirectMessageIndicateTypingEvent,
+        DirectMessageMarkReadEvent,
+        TweetDeleteEvent,
+        UnknownEvent = -1
+    }
+
     [JsonObject]
     public class EventObject
     {
@@ -54,188 +69,254 @@ namespace ReporterNext.Models
         [JsonProperty("users")]
         public IDictionary<string, UserObject> Users { get; set; }
 
+        public EventType CheckType() =>
+            !(TweetCreateEvents is null) ? EventType.TweetCreateEvent :
+            !(FavoriteEvents is null) ? EventType.FavoriteEvent :
+            !(FollowEvents is null) ? EventType.FollowEvent :
+            !(BlockEvents is null) ? EventType.BlockEvent :
+            !(MuteEvents is null) ? EventType.MuteEvent :
+            !(UserEvent is null) ? EventType.UserRevokeEvent :
+            !(DirectMessageEvents is null) ? EventType.DirectMessageEvent :
+            !(DirectMessageIndicateTypingEvents is null) ? EventType.DirectMessageIndicateTypingEvent :
+            !(DirectMessageMarkReadEvents is null) ? EventType.DirectMessageMarkReadEvent :
+            !(TweetDeleteEvents is null) ? EventType.TweetDeleteEvent : EventType.UnknownEvent;
 
-        public (long forUserId, IEnumerable<Event> events) Build() =>
+        public bool TryToTweetCreateEvent(out long forUserId, out IEnumerable<TweetCreateEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(TweetCreateEvents is null) &&
+                (events = TweetCreateEvents.Select(x => new TweetCreateEvent()
+                    {
+                        CreatedAt = x.CreatedAt,
+                        Target = x
+                    })).Any();
+        }
 
-            (long.TryParse(ForUserId ?? "", out var forUserId) ? forUserId : default,
-            !(TweetCreateEvents is null) ?
-                TweetCreateEvents.Select(x => new TweetCreateEvent()
-                {
-                    CreatedAt = x.CreatedAt,
-                    Target = x
-                }) :
-            !(FavoriteEvents is null) ?
-                FavoriteEvents.Select(x => new FavoriteEvent()
-                {
-                    CreatedAt = x.Timestamp,
-                    Target = x.FavoritedStatus,
-                    Source = x.User
-                }) :
-            !(FollowEvents is null) ?
-                new []
-                {
-                    new FollowEvent()
+        public bool TryToFavoriteEvent(out long forUserId, out IEnumerable<FavoriteEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(FavoriteEvents is null) &&
+                (events = FavoriteEvents.Select(x => new FavoriteEvent()
+                    {
+                        CreatedAt = x.Timestamp,
+                        Target = x.FavoritedStatus,
+                        Source = x.User
+                    })).Any();
+        }
+
+        public bool TryToFollowEvent(out long forUserId, out IEnumerable<FollowEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(FollowEvents is null) &&
+                (events = Enumerable.Repeat(new FollowEvent()
                     {
                         CreatedAt = FollowEvents.Timestamp,
                         Target = FollowEvents.Target,
                         Source = FollowEvents.Source
-                    }
-                } :
-            !(BlockEvents is null) ?
-                new []
-                {
-                    new BlockEvent()
+                    }, 1)).Any();
+        }
+
+
+        public bool TryToBlockEvent(out long forUserId, out IEnumerable<BlockEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(BlockEvents is null) &&
+                (events = Enumerable.Repeat(new BlockEvent()
                     {
                         CreatedAt = BlockEvents.Timestamp,
                         Target = BlockEvents.Target,
                         Source = BlockEvents.Source
-                    }
-                } :
-            !(MuteEvents is null) ?
-                new []
-                {
-                    new MuteEvent()
+                    }, 1)).Any();
+        }
+
+
+        public bool TryToMuteEvent(out long forUserId, out IEnumerable<MuteEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(MuteEvents is null) &&
+                (events = Enumerable.Repeat(new MuteEvent()
                     {
                         CreatedAt = MuteEvents.Timestamp,
                         Target = MuteEvents.Target,
                         Source = MuteEvents.Source
-                    }
-                } :
-            !(UserEvent is null || UserEvent.Revoke is null) ?
-                new []
-                {
-                    new UserRevokeEvent()
+                    }, 1)).Any();
+        }
+
+        public bool TryToUserRevokeEvent(out long forUserId, out IEnumerable<UserRevokeEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(UserEvent is null || UserEvent.Revoke is null) &&
+                (events = Enumerable.Repeat(new UserRevokeEvent()
                     {
                         Target = long.TryParse(UserEvent.Revoke.Target.AppId ?? "", out var appId) ? appId : default,
                         Source = long.TryParse(UserEvent.Revoke.Source.UserId ?? "", out var userId) ? userId : default
-                    }
-                } :
-            !(DirectMessageEvents is null) ?
-                DirectMessageEvents.Select(x => new DirectMessageEvent()
-                {
-                    CreatedAt = x.Timestamp,
-                    Target = Users.TryGetValue(x.MessageCreate.Target.RecipientId, out var target) ? new User()
+                    }, 1)).Any();
+        }
+
+        public bool TryToDirectMessageEvent(out long forUserId, out IEnumerable<DirectMessageEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(DirectMessageEvents is null) &&
+                (events = DirectMessageEvents.Select(x => new DirectMessageEvent()
                     {
-                        Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
-                        CreatedAt = target.Timestamp,
-                        Name = target.Name,
-                        ScreenName = target.ScreenName,
-                        Location = target.Location,
-                        Description = target.Description,
-                        IsProtected = target.IsProtected,
-                        IsVerified = target.IsVerified,
-                        FollowersCount = target.FollowersCount,
-                        FriendsCount = target.FriendsCount,
-                        StatusesCount = target.StatusesCount,
-                        ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
-                        ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
-                    } : null,
-                    Source = Users.TryGetValue(x.MessageCreate.SenderId, out var source) ? new User()
+                        CreatedAt = x.Timestamp,
+                        Target = Users.TryGetValue(x.MessageCreate.Target.RecipientId, out var target) ? new User()
+                        {
+                            Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
+                            CreatedAt = target.Timestamp,
+                            Name = target.Name,
+                            ScreenName = target.ScreenName,
+                            Location = target.Location,
+                            Description = target.Description,
+                            IsProtected = target.IsProtected,
+                            IsVerified = target.IsVerified,
+                            FollowersCount = target.FollowersCount,
+                            FriendsCount = target.FriendsCount,
+                            StatusesCount = target.StatusesCount,
+                            ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
+                            ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
+                        } : null,
+                        Source = Users.TryGetValue(x.MessageCreate.SenderId, out var source) ? new User()
+                        {
+                            Id = long.TryParse(source.Id, out var sourceId) ? sourceId : null as long?,
+                            CreatedAt = source.Timestamp,
+                            Name = source.Name,
+                            ScreenName = source.ScreenName,
+                            Location = source.Location,
+                            Description = source.Description,
+                            IsProtected = source.IsProtected,
+                            IsVerified = source.IsVerified,
+                            FollowersCount = source.FollowersCount,
+                            FriendsCount = source.FriendsCount,
+                            StatusesCount = source.StatusesCount,
+                            ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
+                            ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
+                        } : null,
+                        App = Apps.TryGetValue(x.MessageCreate.SourceAppId, out var app) ? new App()
+                        {
+                            Id = app.Id,
+                            Name = app.Name,
+                            Url = app.Url
+                        } : null,
+                        Content = x.MessageCreate.MessageData
+                    })).Any();
+        }
+
+        public bool TryToDirectMessageIndicateTypingEvent(out long forUserId, out IEnumerable<DirectMessageIndicateTypingEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(DirectMessageIndicateTypingEvents is null) &&
+                (events = DirectMessageIndicateTypingEvents.Select(x => new DirectMessageIndicateTypingEvent()
                     {
-                        Id = long.TryParse(source.Id, out var sourceId) ? sourceId : null as long?,
-                        CreatedAt = source.Timestamp,
-                        Name = source.Name,
-                        ScreenName = source.ScreenName,
-                        Location = source.Location,
-                        Description = source.Description,
-                        IsProtected = source.IsProtected,
-                        IsVerified = source.IsVerified,
-                        FollowersCount = source.FollowersCount,
-                        FriendsCount = source.FriendsCount,
-                        StatusesCount = source.StatusesCount,
-                        ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
-                        ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
-                    } : null,
-                    App = Apps.TryGetValue(x.MessageCreate.SourceAppId, out var app) ? new App()
+                        CreatedAt = x.Timestamp,
+                        Target = Users.TryGetValue(x.Target.RecipientId, out var target) ? new User()
+                        {
+                            Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
+                            CreatedAt = target.Timestamp,
+                            Name = target.Name,
+                            ScreenName = target.ScreenName,
+                            Location = target.Location,
+                            Description = target.Description,
+                            IsProtected = target.IsProtected,
+                            IsVerified = target.IsVerified,
+                            FollowersCount = target.FollowersCount,
+                            FriendsCount = target.FriendsCount,
+                            StatusesCount = target.StatusesCount,
+                            ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
+                            ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
+                        } : null,
+                        Source = Users.TryGetValue(x.SenderId, out var source) ? new User()
+                        {
+                            Id = long.TryParse(target.Id, out var sourceId) ? sourceId : null as long?,
+                            CreatedAt = source.Timestamp,
+                            Name = source.Name,
+                            ScreenName = source.ScreenName,
+                            Location = source.Location,
+                            Description = source.Description,
+                            IsProtected = source.IsProtected,
+                            IsVerified = source.IsVerified,
+                            FollowersCount = source.FollowersCount,
+                            FriendsCount = source.FriendsCount,
+                            StatusesCount = source.StatusesCount,
+                            ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
+                            ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
+                        } : null,
+                    })).Any();
+        }
+
+        public bool TryToDirectMessageMarkReadEvent(out long forUserId, out IEnumerable<DirectMessageMarkReadEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(DirectMessageMarkReadEvents is null) &&
+                (events = DirectMessageMarkReadEvents.Select(x => new DirectMessageMarkReadEvent()
                     {
-                        Id = app.Id,
-                        Name = app.Name,
-                        Url = app.Url
-                    } : null,
-                    Content = x.MessageCreate.MessageData
-                }) :
-            !(DirectMessageIndicateTypingEvents is null) ?
-                DirectMessageIndicateTypingEvents.Select(x => new DirectMessageIndicateTypingEvent()
-                {
-                    CreatedAt = x.Timestamp,
-                    Target = Users.TryGetValue(x.Target.RecipientId, out var target) ? new User()
+                        CreatedAt = x.Timestamp,
+                        Target = Users.TryGetValue(x.Target.RecipientId, out var target) ? new User()
+                        {
+                            Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
+                            CreatedAt = target.Timestamp,
+                            Name = target.Name,
+                            ScreenName = target.ScreenName,
+                            Location = target.Location,
+                            Description = target.Description,
+                            IsProtected = target.IsProtected,
+                            IsVerified = target.IsVerified,
+                            FollowersCount = target.FollowersCount,
+                            FriendsCount = target.FriendsCount,
+                            StatusesCount = target.StatusesCount,
+                            ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
+                            ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
+                        } : null,
+                        Source = Users.TryGetValue(x.SenderId, out var source) ? new User()
+                        {
+                            Id = long.TryParse(source.Id, out var sourceId) ? sourceId : null as long?,
+                            CreatedAt = source.Timestamp,
+                            Name = source.Name,
+                            ScreenName = source.ScreenName,
+                            Location = source.Location,
+                            Description = source.Description,
+                            IsProtected = source.IsProtected,
+                            IsVerified = source.IsVerified,
+                            FollowersCount = source.FollowersCount,
+                            FriendsCount = source.FriendsCount,
+                            StatusesCount = source.StatusesCount,
+                            ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
+                            ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
+                        } : null,
+                    })).Any();
+        }
+
+        public bool TryToTweetDeleteEvent(out long forUserId, out IEnumerable<TweetDeleteEvent> events)
+        {
+            events = default;
+            return
+                long.TryParse(ForUserId ?? "", out forUserId) &&
+                !(TweetDeleteEvents is null) &&
+                (events = TweetDeleteEvents.Select(x => new TweetDeleteEvent()
                     {
-                        Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
-                        CreatedAt = target.Timestamp,
-                        Name = target.Name,
-                        ScreenName = target.ScreenName,
-                        Location = target.Location,
-                        Description = target.Description,
-                        IsProtected = target.IsProtected,
-                        IsVerified = target.IsVerified,
-                        FollowersCount = target.FollowersCount,
-                        FriendsCount = target.FriendsCount,
-                        StatusesCount = target.StatusesCount,
-                        ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
-                        ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
-                    } : null,
-                    Source = Users.TryGetValue(x.SenderId, out var source) ? new User()
-                    {
-                        Id = long.TryParse(target.Id, out var sourceId) ? sourceId : null as long?,
-                        CreatedAt = source.Timestamp,
-                        Name = source.Name,
-                        ScreenName = source.ScreenName,
-                        Location = source.Location,
-                        Description = source.Description,
-                        IsProtected = source.IsProtected,
-                        IsVerified = source.IsVerified,
-                        FollowersCount = source.FollowersCount,
-                        FriendsCount = source.FriendsCount,
-                        StatusesCount = source.StatusesCount,
-                        ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
-                        ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
-                    } : null,
-                }) :
-            !(DirectMessageMarkReadEvents is null) ?
-                DirectMessageMarkReadEvents.Select(x => new DirectMessageMarkReadEvent()
-                {
-                    CreatedAt = x.Timestamp,
-                    Target = Users.TryGetValue(x.Target.RecipientId, out var target) ? new User()
-                    {
-                        Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
-                        CreatedAt = target.Timestamp,
-                        Name = target.Name,
-                        ScreenName = target.ScreenName,
-                        Location = target.Location,
-                        Description = target.Description,
-                        IsProtected = target.IsProtected,
-                        IsVerified = target.IsVerified,
-                        FollowersCount = target.FollowersCount,
-                        FriendsCount = target.FriendsCount,
-                        StatusesCount = target.StatusesCount,
-                        ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
-                        ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
-                    } : null,
-                    Source = Users.TryGetValue(x.SenderId, out var source) ? new User()
-                    {
-                        Id = long.TryParse(source.Id, out var sourceId) ? sourceId : null as long?,
-                        CreatedAt = source.Timestamp,
-                        Name = source.Name,
-                        ScreenName = source.ScreenName,
-                        Location = source.Location,
-                        Description = source.Description,
-                        IsProtected = source.IsProtected,
-                        IsVerified = source.IsVerified,
-                        FollowersCount = source.FollowersCount,
-                        FriendsCount = source.FriendsCount,
-                        StatusesCount = source.StatusesCount,
-                        ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
-                        ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
-                    } : null,
-                }) :
-            !(TweetDeleteEvents is null) ?
-                TweetDeleteEvents.Select(x => new TweetDeleteEvent()
-                {
-                    CreatedAt = x.Timestamp,
-                    Target = long.TryParse(x.Status.Id, out var targetId) ? targetId : default,
-                    Source = long.TryParse(x.Status.UserId, out var sourceId) ? sourceId : default,
-                }) :
-                Enumerable.Empty<Event>());
+                        CreatedAt = x.Timestamp,
+                        Target = long.TryParse(x.Status.Id, out var targetId) ? targetId : default,
+                        Source = long.TryParse(x.Status.UserId, out var sourceId) ? sourceId : default,
+                    })).Any();
+        }
     }
 
     public abstract class ToStatusEvent : Event

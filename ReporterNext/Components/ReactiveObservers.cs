@@ -62,23 +62,40 @@ namespace ReporterNext.Components
 
         public void OnNext(EventObject value)
         {
-            var (forUserId, events) = value.Build();
-            foreach (var @event in events)
+            switch (value.CheckType())
             {
-                switch (@event)
-                {
-                    case TweetCreateEvent x: _factory.Create<TweetCreateEvent>(forUserId).Execute(x); break;
-                    case FavoriteEvent x: _factory.Create<FavoriteEvent>(forUserId).Execute(x); break;
-                    case FollowEvent x: _factory.Create<FollowEvent>(forUserId).Execute(x); break;
-                    case BlockEvent x: _factory.Create<BlockEvent>(forUserId).Execute(x); break;
-                    case MuteEvent x: _factory.Create<MuteEvent>(forUserId).Execute(x); break;
-                    case UserRevokeEvent x: _factory.Create<UserRevokeEvent>(forUserId).Execute(x); break;
-                    case DirectMessageEvent x: _factory.Create<DirectMessageEvent>(forUserId).Execute(x); break;
-                    case DirectMessageIndicateTypingEvent x: _factory.Create<DirectMessageIndicateTypingEvent>(forUserId).Execute(x); break;
-                    case DirectMessageMarkReadEvent x: _factory.Create<DirectMessageMarkReadEvent>(forUserId).Execute(x); break;
-                    case TweetDeleteEvent x: _factory.Create<TweetDeleteEvent>(forUserId).Execute(x); break;
-                    default: UnknownEvent(nameof(value)); break;
-                }
+                case EventType.TweetCreateEvent when value.TryToTweetCreateEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<TweetCreateEvent>(forUserId).Execute(@event); break;
+                case EventType.FavoriteEvent when value.TryToFavoriteEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<FavoriteEvent>(forUserId).Execute(@event); break;
+                case EventType.FollowEvent when value.TryToFollowEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<FollowEvent>(forUserId).Execute(@event); break;
+                case EventType.BlockEvent when value.TryToBlockEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<BlockEvent>(forUserId).Execute(@event); break;
+                case EventType.MuteEvent when value.TryToMuteEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<MuteEvent>(forUserId).Execute(@event); break;
+                case EventType.UserRevokeEvent when value.TryToUserRevokeEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<UserRevokeEvent>(forUserId).Execute(@event); break;
+                case EventType.DirectMessageEvent when value.TryToDirectMessageEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<DirectMessageEvent>(forUserId).Execute(@event); break;
+                case EventType.DirectMessageIndicateTypingEvent when value.TryToDirectMessageIndicateTypingEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<DirectMessageIndicateTypingEvent>(forUserId).Execute(@event); break;
+                case EventType.DirectMessageMarkReadEvent when value.TryToDirectMessageMarkReadEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<DirectMessageMarkReadEvent>(forUserId).Execute(@event); break;
+                case EventType.TweetDeleteEvent when value.TryToTweetDeleteEvent(out var forUserId, out var events):
+                    foreach (var @event in events)
+                        _factory.Create<TweetDeleteEvent>(forUserId).Execute(@event); break;
+                default:
+                    UnknownEvent(nameof(value)); break;
             }
         }
 

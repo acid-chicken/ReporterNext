@@ -8,44 +8,44 @@ namespace ReporterNext.Components
 {
     public class EventObservableFactory
     {
-        private IDictionary<Type, IDictionary<long, EventObservable<Event>>> _observables =
-            new Dictionary<Type, IDictionary<long, EventObservable<Event>>>();
+        private IDictionary<Type, IDictionary<long, EventObservable>> _observables =
+            new Dictionary<Type, IDictionary<long, EventObservable>>();
 
-        private IDictionary<long, EventObservable<Event>> GetOrCreateDictionary<T>()
+        private IDictionary<long, EventObservable> GetOrCreateDictionary<T>()
             where T : Event, new() =>
             _observables.TryGetValue(typeof(T), out var observables) ?
                 observables :
                 CreateOrGetDictionary<T>();
 
-        private IDictionary<long, EventObservable<Event>> CreateOrGetDictionary<T>()
+        private IDictionary<long, EventObservable> CreateOrGetDictionary<T>()
             where T : Event, new()
         {
-            var observables = new Dictionary<long, EventObservable<Event>>();
+            var observables = new Dictionary<long, EventObservable>();
             return _observables.TryAdd(typeof(T), observables) ?
                 observables :
                 GetOrCreateDictionary<T>();
         }
 
-        private EventObservable<Event> GetOrCreate<T>(long forUserId)
+        private EventObservable GetOrCreate<T>(long forUserId)
             where T : Event, new() =>
             GetOrCreateDictionary<T>().TryGetValue(forUserId, out var observable) ?
                 observable :
                 CreateOrGet<T>(forUserId);
 
-        private EventObservable<Event> CreateOrGet<T>(long forUserId)
+        private EventObservable CreateOrGet<T>(long forUserId)
             where T : Event, new()
         {
-            var observeable = new EventObservable<Event>();
+            var observeable = new EventObservable();
             return GetOrCreateDictionary<T>().TryAdd(forUserId, observeable) ?
                 observeable :
                 GetOrCreate<T>(forUserId);
         }
 
-        public EventObservable<Event> Create<T>(long forUserId)
+        public EventObservable Create<T>(long forUserId)
             where T : Event, new() =>
             GetOrCreate<T>(forUserId);
 
-        public EventObservable<Event> Create(long forUserId) =>
+        public EventObservable Create(long forUserId) =>
             Create<Event>(forUserId);
     }
 }
