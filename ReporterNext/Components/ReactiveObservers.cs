@@ -10,13 +10,17 @@ namespace ReporterNext.Components
 {
     public class ReplyQuotedTimeObserver : IObserver<TweetCreateEvent>, IObserver<Event>
     {
-        private long _forUserId;
-        private Tokens _tokens;
+        private string _consumerKey;
+        private string _consumerSecret;
+        private string _accessToken;
+        private string _accessTokenSecret;
 
-        public ReplyQuotedTimeObserver(long forUserId, Tokens tokens)
+        public ReplyQuotedTimeObserver(Tokens tokens)
         {
-            _forUserId = forUserId;
-            _tokens = tokens;
+            _consumerKey = tokens.ConsumerKey;
+            _consumerSecret = tokens.ConsumerSecret;
+            _accessToken = tokens.AccessToken;
+            _accessTokenSecret = tokens.AccessTokenSecret;
         }
 
         public void OnCompleted()
@@ -31,18 +35,18 @@ namespace ReporterNext.Components
             OnNext((TweetCreateEvent)value);
 
         public void OnNext(TweetCreateEvent value) =>
-            BackgroundJob.Enqueue(() => JobAsync(value));
+            BackgroundJob.Enqueue(() => JobAsync(_consumerKey, _consumerSecret, _accessToken, _accessTokenSecret, value));
 
-        public async Task JobAsync(TweetCreateEvent value)
-        {
-            if ((value.Target.QuotedStatusId ?? value.Target.QuotedStatus?.Id) is long statusId &&
-                value.Target.User.Id is long userId)
-                await _tokens.Statuses.UpdateAsync(
+        public static Task JobAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, TweetCreateEvent @event) =>
+
+            ((@event.Target.QuotedStatusId ?? @event.Target.QuotedStatus?.Id) is long statusId &&
+                @event.Target.User.Id is long userId) ?
+                Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret).Statuses.UpdateAsync(
                     status => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
                     in_reply_to_status_id => userId,
                     auto_populate_reply_metadata => true,
-                    tweet_mode => TweetMode.Extended);
-        }
+                    tweet_mode => TweetMode.Extended) :
+                Task.CompletedTask;
     }
 
     public class EventObserver : IObserver<EventObject>
@@ -122,7 +126,7 @@ namespace ReporterNext.Components
             var json = app.ApplicationServices.GetService<JsonObservable>();
 
             factory.Create<TweetCreateEvent>(forUserId)
-                .Subscribe(new ReplyQuotedTimeObserver(forUserId, tokens), true);
+                .Subscribe(new ReplyQuotedTimeObserver(tokens), true);
 
             json.Subscribe(new EventObserver(factory), true);
 
