@@ -51,7 +51,7 @@ namespace ReporterNext.Components
                         include_ext_alt_text => true,
                         tweet_mode => TweetMode.Extended) :
                 @event.Target.InReplyToStatusId is long replyId &&
-                @event.Target.InReplyToUserId?.ToString() != accessToken.Split('-')[0] ?
+                @event.Target.User.Id.ToString() != accessToken.Split('-')[0] ?
                     tokens.Statuses.UpdateAsync(
                         status => $"ツイート時刻：{replyId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
                         in_reply_to_status_id => @event.Target.Id,
