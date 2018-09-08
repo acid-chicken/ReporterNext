@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using CoreTweet;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
@@ -29,17 +30,18 @@ namespace ReporterNext.Components
         public void OnNext(Event value) =>
             OnNext((TweetCreateEvent)value);
 
-        public void OnNext(TweetCreateEvent value)
+        public void OnNext(TweetCreateEvent value) =>
+            BackgroundJob.Enqueue(() => JobAsync(value));
+
+        public async Task JobAsync(TweetCreateEvent value)
         {
-            var nullableId = value.Target.QuotedStatusId ?? value.Target.QuotedStatus?.Id;
-            if (nullableId is long id)
-            {
-                BackgroundJob.Enqueue(() => _tokens.Statuses.UpdateAsync(
-                    status => $"ツイート時刻：{id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
-                    in_reply_to_status_id => value.Target.Id,
+            if ((value.Target.QuotedStatusId ?? value.Target.QuotedStatus?.Id) is long statusId &&
+                value.Target.User.Id is long userId)
+                await _tokens.Statuses.UpdateAsync(
+                    status => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
+                    in_reply_to_status_id => userId,
                     auto_populate_reply_metadata => true,
-                    tweet_mode => TweetMode.Extended));
-            }
+                    tweet_mode => TweetMode.Extended);
         }
     }
 
