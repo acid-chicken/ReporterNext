@@ -43,7 +43,7 @@ namespace ReporterNext.Components
         }
     }
 
-    public class EventObserver : IObserver<Event>
+    public class EventObserver : IObserver<EventObject>
     {
         private long _forUserId;
         private EventObservableFactory _factory;
@@ -62,21 +62,26 @@ namespace ReporterNext.Components
         {
         }
 
-        public void OnNext(Event value)
+        public void OnNext(EventObject value)
         {
-            switch (value)
+            var (forUserId, events) = value.Build();
+            if (forUserId == _forUserId)
+            foreach (var @event in events)
             {
-                case TweetCreateEvent x: _factory.Create<TweetCreateEvent>(_forUserId).Execute(x); break;
-                case FavoriteEvent x: _factory.Create<FavoriteEvent>(_forUserId).Execute(x); break;
-                case FollowEvent x: _factory.Create<FollowEvent>(_forUserId).Execute(x); break;
-                case BlockEvent x: _factory.Create<BlockEvent>(_forUserId).Execute(x); break;
-                case MuteEvent x: _factory.Create<MuteEvent>(_forUserId).Execute(x); break;
-                case UserRevokeEvent x: _factory.Create<UserRevokeEvent>(_forUserId).Execute(x); break;
-                case DirectMessageEvent x: _factory.Create<DirectMessageEvent>(_forUserId).Execute(x); break;
-                case DirectMessageIndicateTypingEvent x: _factory.Create<DirectMessageIndicateTypingEvent>(_forUserId).Execute(x); break;
-                case DirectMessageMarkReadEvent x: _factory.Create<DirectMessageMarkReadEvent>(_forUserId).Execute(x); break;
-                case TweetDeleteEvent x: _factory.Create<TweetDeleteEvent>(_forUserId).Execute(x); break;
-                default: UnknownEvent(nameof(value)); break;
+                switch (@event)
+                {
+                    case TweetCreateEvent x: _factory.Create<TweetCreateEvent>(forUserId).Execute(x); break;
+                    case FavoriteEvent x: _factory.Create<FavoriteEvent>(forUserId).Execute(x); break;
+                    case FollowEvent x: _factory.Create<FollowEvent>(forUserId).Execute(x); break;
+                    case BlockEvent x: _factory.Create<BlockEvent>(forUserId).Execute(x); break;
+                    case MuteEvent x: _factory.Create<MuteEvent>(forUserId).Execute(x); break;
+                    case UserRevokeEvent x: _factory.Create<UserRevokeEvent>(forUserId).Execute(x); break;
+                    case DirectMessageEvent x: _factory.Create<DirectMessageEvent>(forUserId).Execute(x); break;
+                    case DirectMessageIndicateTypingEvent x: _factory.Create<DirectMessageIndicateTypingEvent>(forUserId).Execute(x); break;
+                    case DirectMessageMarkReadEvent x: _factory.Create<DirectMessageMarkReadEvent>(forUserId).Execute(x); break;
+                    case TweetDeleteEvent x: _factory.Create<TweetDeleteEvent>(forUserId).Execute(x); break;
+                    default: UnknownEvent(nameof(value)); break;
+                }
             }
         }
 
@@ -89,20 +94,21 @@ namespace ReporterNext.Components
         public static IServiceCollection AddReactiveInterface(this IServiceCollection services)
         {
             services.AddSingleton<EventObservableFactory>();
+            services.AddSingleton<JsonObservable>();
 
             return services;
         }
 
         public static IApplicationBuilder UseReactiveInterface(this IApplicationBuilder app, long forUserId = default)
         {
-            var undisposings = app.ApplicationServices.GetService<UndisposingObjectCollection>();
             var tokens = app.ApplicationServices.GetService<Tokens>();
             var factory = app.ApplicationServices.GetService<EventObservableFactory>();
+            var json = app.ApplicationServices.GetService<JsonObservable>();
 
             factory.Create<TweetCreateEvent>(forUserId)
                 .Subscribe(new ReplyQuotedTimeObserver(forUserId, tokens), true);
-            factory.Create<Event>(forUserId)
-                .Subscribe(new EventObserver(forUserId, factory), true);
+
+            json.Subscribe(new EventObserver(forUserId, factory), true);
 
             return app;
         }

@@ -9,11 +9,12 @@ namespace ReporterNext.Models
     {
         private KeyedHashAlgorithm _keyedHash;
 
-        public CRC(KeyedHashAlgorithm keyedHash, string key)
-        {
-            keyedHash.Key = Encoding.ASCII.GetBytes(key);
+        public CRC(KeyedHashAlgorithm keyedHash) =>
             _keyedHash = keyedHash;
-        }
+
+        public CRC(KeyedHashAlgorithm keyedHash, string key) :
+            this(keyedHash) =>
+            keyedHash.Key = Encoding.ASCII.GetBytes(key);
 
         public CRCResponse GenerateResponse(string value)
             => new CRCResponse()

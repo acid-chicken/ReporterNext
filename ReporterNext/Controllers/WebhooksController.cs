@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,13 +15,13 @@ namespace ReporterNext.Controllers
     [Route("[controller]"), ApiController]
     public class WebhooksController : ControllerBase
     {
-        private IConfiguration _configuration;
+        private JsonObservable _observable;
 
         private CRC _crc;
 
-        public WebhooksController(IConfiguration configuration, CRC crc)
+        public WebhooksController(JsonObservable observable, CRC crc)
         {
-            _configuration = configuration;
+            _observable = observable;
             _crc = crc;
         }
 
@@ -36,10 +36,7 @@ namespace ReporterNext.Controllers
         {
             if (eventObject is null)
                 return BadRequest();
-            var (forUserId, events) = eventObject.Build();
-            var factory = _configuration.Get<EventObservableFactory>();
-            foreach (var @event in events)
-                factory.Create(forUserId).Execute(@event);
+            BackgroundJob.Enqueue(() => _observable.Execute(eventObject));
             return Ok();
         }
     }
