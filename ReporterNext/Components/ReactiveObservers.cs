@@ -43,7 +43,7 @@ namespace ReporterNext.Components
                 @event.Target.User.Id is long userId) ?
                 Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret).Statuses.UpdateAsync(
                     status => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
-                    in_reply_to_status_id => userId,
+                    in_reply_to_status_id => statusId,
                     auto_populate_reply_metadata => true,
                     tweet_mode => TweetMode.Extended) :
                 Task.CompletedTask;
