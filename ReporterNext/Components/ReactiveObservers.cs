@@ -41,6 +41,7 @@ namespace ReporterNext.Components
         public static Task JobAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, TweetCreateEvent @event)
         {
             var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+            var myId = long.Parse(accessToken.Split('-')[0]);
             Task ReplyAsync(long id) =>
                     tokens.Statuses.UpdateAsync(
                     status => $"ツイート時刻：{id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
@@ -50,10 +51,11 @@ namespace ReporterNext.Components
                     tweet_mode => TweetMode.Extended);
             return
                 (@event.Target.QuotedStatusId ?? @event.Target.QuotedStatus?.Id) is long quotedId &&
-                    @event.Target.User.Id is long userId ?
+                    @event.Target.InReplyToUserId is long userId &&
+                    userId == myId ?
                     ReplyAsync(quotedId) :
                 @event.Target.InReplyToStatusId is long replyId &&
-                @event.Target.User.Id.ToString() != accessToken.Split('-')[0] ?
+                @event.Target.User.Id != myId ?
                     ReplyAsync(replyId) :
                 Task.CompletedTask;
     }
