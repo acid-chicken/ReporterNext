@@ -18,7 +18,7 @@ namespace ReporterNext.Components
             where T : Event
         {
             foreach (var observer in _observers)
-                if (observer is IObserver<Event> x)
+                if (observer is IObserver<T> x)
                     x.OnNext(content);
                 else if (fallback)
                     observer.OnNext(content);
