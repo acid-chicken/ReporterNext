@@ -41,21 +41,17 @@ namespace ReporterNext.Components
         public IDisposable Subscribe(IObserver<Event> observer) =>
             Subscribe(observer, false);
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    Task.WaitAll(_observers.Select(x => Task.Run(() => x.OnCompleted())).ToArray());
-                }
+        protected virtual void Dispose(bool disposing) =>
+            DisposeAsync(disposing).RunSynchronously();
 
-                disposedValue = true;
-            }
-        }
-        public void Dispose()
-        {
+        protected virtual Task DisposeAsync(bool disposing) =>
+            !disposedValue &&
+                disposing &&
+                (disposedValue = true) ?
+                    Task.WhenAll(_observers.Select(x => Task.Run(() => x.OnCompleted())).ToArray()) :
+                    Task.CompletedTask;
+
+        public void Dispose() =>
             Dispose(true);
-        }
     }
 }
