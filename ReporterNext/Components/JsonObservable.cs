@@ -32,19 +32,12 @@ namespace ReporterNext.Components
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
+            if (!disposedValue &&
+                disposing &&
+                (disposedValue = true))
                     Task.WaitAll(_observers.Select(x => Task.Run(() => x.OnCompleted())).ToArray());
-                }
-
-                disposedValue = true;
-            }
         }
-        public void Dispose()
-        {
+        public void Dispose() =>
             Dispose(true);
-        }
     }
 }
