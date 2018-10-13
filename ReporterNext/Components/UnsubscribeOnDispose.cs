@@ -19,12 +19,10 @@ namespace ReporterNext.Components
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!_disposed)
-            {
-                if (disposing)
+            if (!_disposed &&
+                disposing &&
+                (_disposed = true))
                     _observers.Remove(_observer);
-                _disposed = true;
-            }
         }
         public void Dispose() =>
             Dispose(true);
