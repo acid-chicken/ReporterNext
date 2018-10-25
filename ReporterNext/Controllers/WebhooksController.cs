@@ -12,7 +12,7 @@ using ReporterNext.Models;
 
 namespace ReporterNext.Controllers
 {
-    [Route("[controller]"), ApiController]
+    [Route("[controller]/[action]"), ApiController]
     public class WebhooksController : ControllerBase
     {
         private JsonObservable _observable;
@@ -26,12 +26,12 @@ namespace ReporterNext.Controllers
         }
 
         // GET webhooks/twitter
-        [HttpGet("[action]")]
+        [HttpGet]
         public IActionResult Twitter([FromQuery(Name = "crc_token")] string crcToken, [FromQuery(Name = "nonce")] string nonce) =>
             Ok(_crc.GenerateResponse(crcToken));
 
         // POST webhooks/twitter
-        [HttpPost("[action]")]
+        [HttpPost]
         public IActionResult Twitter([FromBody] EventObject eventObject)
         {
             if (eventObject is null)
