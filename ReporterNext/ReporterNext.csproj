@@ -16,7 +16,7 @@
     <PackageReference Include="LiteDB" Version="4.1.4" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="SkiaSharp" Version="1.68.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.0.571" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.588" />
   </ItemGroup>
 
 </Project>
