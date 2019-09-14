@@ -19,7 +19,7 @@ namespace ReporterNext.Models
         public CRCResponse GenerateResponse(string value)
             => new CRCResponse()
             {
-                ResponseToken = value is null ? default : $"sha256={Convert.ToBase64String(_keyedHash.ComputeHash(Encoding.ASCII.GetBytes(value)))}"
+                ResponseToken = $"sha256={Convert.ToBase64String(_keyedHash.ComputeHash(value is null ? new byte[] {} : Encoding.ASCII.GetBytes(value)))}"
             };
     }
 
