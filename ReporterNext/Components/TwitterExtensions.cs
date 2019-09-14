@@ -21,8 +21,8 @@ namespace ReporterNext.Components
             long accessTokenUserId,
             string accessTokenScreenName)
         {
-            services.AddSingleton<Tokens>(Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret, accessTokenUserId, accessTokenScreenName));
-            services.AddSingleton<OAuth2Token>(OAuth2.GetTokenAsync(consumerKey, consumerSecret).GetAwaiter().GetResult());
+            services.AddSingleton(Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret, accessTokenUserId, accessTokenScreenName));
+            services.AddSingleton(OAuth2.GetTokenAsync(consumerKey, consumerSecret).GetAwaiter().GetResult());
 
             return services;
         }
