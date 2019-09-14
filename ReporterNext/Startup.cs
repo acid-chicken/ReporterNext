@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -41,15 +42,15 @@ namespace ReporterNext
         public ConnectionMultiplexer Redis { get; }
 
         private long GetAccessTokenUserId() =>
-            long.TryParse(Configuration["Twitter:AccessToken"].Split('-').FirstOrDefault(), out var result) ? result : default;
+            long.TryParse(Configuration["Twitter:AccessToken"]?.Split('-').FirstOrDefault(), out var result) ? result : default;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             var accessTokenUserId = GetAccessTokenUserId();
-            services.AddSingleton<IConfiguration>(Configuration);
-            services.AddSingleton<ConnectionMultiplexer>(Redis);
-            services.AddSingleton<CRC>(new CRC(KeyedHashAlgorithm.Create("HMACSHA256"), Configuration["Twitter:ConsumerSecret"]));
+            services.AddSingleton(Configuration);
+            services.AddSingleton(Redis);
+            services.AddSingleton(new CRC(KeyedHashAlgorithm.Create("HMACSHA256"), Configuration["Twitter:ConsumerSecret"]));
             services.AddHangfire(configuration =>
                 configuration.UseRedisStorage(Redis));
             services.AddReactiveInterface();
@@ -60,14 +61,20 @@ namespace ReporterNext
                     accessTokenUserId,
                     Configuration["Twitter:ScreenName"]);
             services.AddDirectoryBrowser();
-            services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Latest)
-                .AddJsonOptions(options =>
-                    options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
+            services.AddRouting(options =>
+            {
+                options.LowercaseUrls = true;
+            });
+            services.AddControllers();
+            services.AddRazorPages();
+            //services.AddMvc()
+                //.SetCompatibilityVersion(CompatibilityVersion.Latest);
+                //.AddNewtonsoftJson(options =>
+                //    options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             _ = env.IsDevelopment() ?
                 app.UseDeveloperExceptionPage() :
@@ -103,8 +110,12 @@ namespace ReporterNext
                 RequestPath = "/wwwroot",
                 EnableDirectoryBrowsing = env.IsDevelopment()
             });
-            app.UseMvc(routes =>
-                routes.MapRoute("default", "{controller=Status}/{action=Index}"));
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute("default", "{controller=Status}/{action=Index}");
+                endpoints.MapRazorPages();
+            });
         }
     }
 }
