@@ -1,7 +1,7 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace ReporterNext.Models
 {
@@ -23,9 +23,10 @@ namespace ReporterNext.Models
             };
     }
 
+    [JsonObject]
     public class CRCResponse
     {
-        [JsonPropertyName("response_token")]
+        [JsonProperty("response_token")]
         public string ResponseToken { get; set; }
     }
 }

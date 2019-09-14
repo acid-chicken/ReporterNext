@@ -65,7 +65,8 @@ namespace ReporterNext
             {
                 options.LowercaseUrls = true;
             });
-            services.AddControllers();
+            services.AddControllers()
+                .AddNewtonsoftJson();
             services.AddRazorPages();
             //services.AddMvc()
                 //.SetCompatibilityVersion(CompatibilityVersion.Latest);
