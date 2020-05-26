@@ -193,7 +193,7 @@ namespace ReporterNext.Components
 
                             return tokens.DirectMessages.Events.NewAsync(
                                 recipient_id => recipientId,
-                                text => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff} https://twitter.com/i/web/status/${statusId}");
+                                text => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff} https://twitter.com/i/web/status/{statusId}");
                         }));
 
             return metadataSections[0] switch

@@ -27,7 +27,7 @@ namespace ReporterNext.Components
         {
             var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
             var myId = long.Parse(accessToken.Split('-')[0]);
-            var name = $"${PickOneFromUserTimelineInducer}#${key}";
+            var name = $"{PickOneFromUserTimelineInducer}#{key}";
 
             Task<WelcomeMessage> FindTargetedWelcomeMessage(string nextCursor = default) =>
                 tokens.DirectMessages.WelcomeMessages.ListAsync(
@@ -51,9 +51,9 @@ namespace ReporterNext.Components
                         {
                             new QuickReplyOption()
                             {
-                                Label = $"「${value}」で照会",
+                                Label = $"「{value}」で照会",
                                 Description = $"最新の「{value}」ツイートの投稿時刻をミリ秒単位で照会します。",
-                                Metadata = $"${PickOneFromUserTimeline}:${key}",
+                                Metadata = $"{PickOneFromUserTimeline}:{key}",
                             },
                         },
                     },
@@ -63,7 +63,7 @@ namespace ReporterNext.Components
             }
 
             await tokens.Statuses.UpdateAsync(
-                status => $"こちらのリンクからダイレクトメッセージ経由で最新の「${value}」ツイートの投稿時刻をミリ秒単位で照会できます。リンクを使用せずに直接リプライあるいはダイレクトメッセージで対象ツイートを引用するか、ツイートスレッドでメンションすることでも照会可能です。 https://twitter.com/messages/compose?recipient_id=${myId}&weelcome_message_id=${welcomeMessage.Id}",
+                status => $"こちらのリンクからダイレクトメッセージ経由で最新の「{value}」ツイートの投稿時刻をミリ秒単位で照会できます。リンクを使用せずに直接リプライあるいはダイレクトメッセージで対象ツイートを引用するか、ツイートスレッドでメンションすることでも照会可能です。 https://twitter.com/messages/compose?recipient_id={myId}&weelcome_message_id={welcomeMessage.Id}",
                 auto_populate_reply_metadata => true,
                 include_ext_alt_text => true,
                 tweet_mode => TweetMode.Extended);
