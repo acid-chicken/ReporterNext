@@ -189,11 +189,11 @@ namespace ReporterNext.Components
                         tweet_mode => TweetMode.Extended)
                         .ContinueWith(x =>
                         {
-                            var statusId = x.Result.FirstOrDefault(x => targets.IsMatch(x.FullText ?? x.Text)).Id;
+                            var status = x.Result.FirstOrDefault(x => targets.IsMatch(x.FullText ?? x.Text));
 
                             return tokens.DirectMessages.Events.NewAsync(
                                 recipient_id => recipientId,
-                                text => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff} https://twitter.com/i/web/status/{statusId}");
+                                text => $"ツイート時刻：{status.Id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff} https://twitter.com/{status.User.ScreenName}/status/{status.Id}");
                         }));
 
             return metadataSections[0] switch
