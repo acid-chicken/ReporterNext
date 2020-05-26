@@ -12,22 +12,22 @@ namespace ReporterNext.Components
     public class CronTasks
     {
         public const string PickOneFromUserTimeline = "pick_one_from_user_timeline";
-        public const string PickOneFromUserTimelineInducer = "1";
+        public const string PickOneFromUserTimelineInducer = "p";
 
-        public static IDictionary<string, KeyValuePair<string, Regex>> AvailableTargets = new Dictionary<string, KeyValuePair<string, Regex>>
+        public static IDictionary<string, KeyValuePair<string, string>> AvailableTargets = new Dictionary<string, KeyValuePair<string, string>>
         {
-            ["334"] = KeyValuePair.Create("334", new Regex("334")),
+            ["334"] = KeyValuePair.Create("334", "334"),
         };
 
         public static IDictionary<string, string> ObsoleteTargets = new Dictionary<string, string>
         {
         };
 
-        public static async Task TweetQuickReplyInducerAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, string key, KeyValuePair<string, Regex> value)
+        public static async Task TweetQuickReplyInducerAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, string key, KeyValuePair<string, string> value)
         {
             var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
             var myId = long.Parse(accessToken.Split('-')[0]);
-            var name = $"${PickOneFromUserTimelineInducer}_${key}";
+            var name = $"${PickOneFromUserTimelineInducer}#${key}";
 
             Task<WelcomeMessage> FindTargetedWelcomeMessage(string nextCursor = default) =>
                 tokens.DirectMessages.WelcomeMessages.ListAsync(
