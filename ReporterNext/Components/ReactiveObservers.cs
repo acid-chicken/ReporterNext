@@ -169,7 +169,7 @@ namespace ReporterNext.Components
             var myId = long.Parse(accessToken.Split('-')[0]);
             var metadataSections = @event.Content.QuickReplyResponse.Metadata?.Split(':');
 
-            if (@event.Content.QuickReplyResponse.Type != "options" || (metadataSections?.Length ?? 0) < 1 || !(@event.Source.Id is long recipientId) || recipientId == myId)
+            if (@event.Content.QuickReplyResponse?.Type != "options" || (metadataSections?.Length ?? 0) < 1 || !(@event.Source.Id is long recipientId) || recipientId == myId)
                 return Task.CompletedTask;
 
             Task PickOneFromUserTimelineAndReplyAsync(long recipientId, Regex targets) =>
@@ -204,7 +204,7 @@ namespace ReporterNext.Components
                 CronTasks.PickOneFromUserTimeline =>
                     metadataSections[1] switch
                     {
-                        "334" => PickOneFromUserTimelineAndReplyAsync(recipientId, new Regex(CronTasks.AvailableTargets.TryGetValue("334", out var result) ? result.Value : "334")),
+                        "334" => PickOneFromUserTimelineAndReplyAsync(recipientId, new Regex(CronTasks.AvailableTargets.TryGetValue("334", out var result) ? result.Value : "^334$")),
                         _ => Task.CompletedTask,
                     },
                 _ => Task.CompletedTask,
