@@ -105,10 +105,12 @@ namespace ReporterNext.Components
                     .Aggregate(default(string), (a, c) => (a ?? c) == "status" ? c : a), out var result) ? result : default)
                 .Where(x => x != default);
 
-            if (!ids.Any())
+            if (!ids.Any() || !(@event.Source.Id is long recipientId))
                 return Task.CompletedTask;
 
-            var markReadTask = tokens.DirectMessages.MarkReadAsync();
+            var markReadTask = tokens.DirectMessages.MarkReadAsync(
+                last_read_event_id => @event.Id,
+                recipient_id => recipientId);
 
             Task ReplyAsync(long recipientId, long statusId) =>
                 tokens.DirectMessages.Events.NewAsync(
@@ -124,11 +126,9 @@ namespace ReporterNext.Components
 
             return Task.WhenAll(
                 markReadTask,
-                @event.Source.Id is long recipientId ?
-                    ids.Count() == 1 && ids.FirstOrDefault() is long id ?
-                        ReplyAsync(recipientId, id) :
-                        ReplyBulkAsync(recipientId, ids) :
-                    Task.CompletedTask);
+                ids.Count() == 1 && ids.FirstOrDefault() is long id ?
+                    ReplyAsync(recipientId, id) :
+                    ReplyBulkAsync(recipientId, ids));
         }
     }
 

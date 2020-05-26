@@ -182,6 +182,7 @@ namespace ReporterNext.Models
                     .Where(x => x.Type == "message_create" && x.MessageCreate is MessageObject)
                     .Select(x => new DirectMessageEvent()
                     {
+                        Id = long.TryParse(x.Id, out var id) ? id : null as long?,
                         CreatedAt = x.Timestamp,
                         Target = !(Users is null) && Users.TryGetValue(x.MessageCreate.Target.RecipientId, out var target) ? new User()
                         {
@@ -455,6 +456,8 @@ namespace ReporterNext.Models
 
     public class DirectMessageEvent : UserToUserEvent
     {
+        public long? Id { get; set; }
+
         public App App { get; set; }
 
         public MessageData Content { get; set; }
