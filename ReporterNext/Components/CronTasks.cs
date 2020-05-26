@@ -63,7 +63,7 @@ namespace ReporterNext.Components
             }
 
             await tokens.Statuses.UpdateAsync(
-                status => $"こちらのリンクからダイレクトメッセージ経由で最新の「{value}」ツイートの投稿時刻をミリ秒単位で照会できます。リンクを使用せずに直接リプライあるいはダイレクトメッセージで対象ツイートを引用するか、ツイートスレッドでメンションすることでも照会可能です。 https://twitter.com/messages/compose?recipient_id={myId}&weelcome_message_id={welcomeMessage.Id}",
+                status => $"こちらのリンクからダイレクトメッセージ経由で最新の「{value}」ツイートの投稿時刻をミリ秒単位で照会できます。リンクを使用せずに直接リプライあるいはダイレクトメッセージで対象ツイートを引用するか、ツイートスレッドでメンションすることでも照会可能です。 https://twitter.com/messages/compose?recipient_id={myId}&welcome_message_id={welcomeMessage.Id}",
                 auto_populate_reply_metadata => true,
                 include_ext_alt_text => true,
                 tweet_mode => TweetMode.Extended);
