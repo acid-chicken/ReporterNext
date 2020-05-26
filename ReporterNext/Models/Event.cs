@@ -178,8 +178,9 @@ namespace ReporterNext.Models
             events = default;
             return
                 long.TryParse(ForUserId ?? "", out forUserId) &&
-                !(DirectMessageEvents is null) &&
-                (events = DirectMessageEvents.Select(x => new DirectMessageEvent()
+                (events = DirectMessageEvents?
+                    .Where(x => x.Type == "message_create" && x.MessageCreate is MessageObject)
+                    .Select(x => new DirectMessageEvent()
                     {
                         CreatedAt = x.Timestamp,
                         Target = Users.TryGetValue(x.MessageCreate.Target.RecipientId, out var target) ? new User()
@@ -221,7 +222,7 @@ namespace ReporterNext.Models
                             Url = app.Url
                         } : null,
                         Content = x.MessageCreate.MessageData
-                    })).Any();
+                    }) ?? Enumerable.Empty<DirectMessageEvent>()).Any();
         }
 
         public bool TryToDirectMessageIndicateTypingEvent(out long forUserId, out IEnumerable<DirectMessageIndicateTypingEvent> events)
@@ -455,6 +456,7 @@ namespace ReporterNext.Models
     public class DirectMessageEvent : UserToUserEvent
     {
         public App App { get; set; }
+
         public MessageData Content { get; set; }
     }
 
