@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CoreTweet;
@@ -60,6 +61,74 @@ namespace ReporterNext.Components
                 @event.Target.User.Id != myId ?
                     ReplyAsync(replyId) :
                 Task.CompletedTask;
+        }
+    }
+
+    public class ReplyDirectMessageQuotedTimeObserver : IObserver<DirectMessageEvent>, IObserver<Event>
+    {
+        private readonly string _consumerKey;
+        private readonly string _consumerSecret;
+        private readonly string _accessToken;
+        private readonly string _accessTokenSecret;
+
+        public ReplyDirectMessageQuotedTimeObserver(Tokens tokens)
+        {
+            _consumerKey = tokens.ConsumerKey;
+            _consumerSecret = tokens.ConsumerSecret;
+            _accessToken = tokens.AccessToken;
+            _accessTokenSecret = tokens.AccessTokenSecret;
+        }
+
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error)
+        {
+        }
+
+        public void OnNext(Event value) =>
+            OnNext((TweetCreateEvent)value);
+
+        public void OnNext(DirectMessageEvent value) =>
+            BackgroundJob.Enqueue(() => JobAsync(_consumerKey, _consumerSecret, _accessToken, _accessTokenSecret, value));
+
+        public static Task JobAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, DirectMessageEvent @event)
+        {
+            var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+            var myId = long.Parse(accessToken.Split('-')[0]);
+            var ids = @event.Content.Entities.Urls
+                .Select(x => new Uri(x.ExpandedUrl))
+                .Where(x => x.Host == "twitter.com")
+                .Select(x => long.TryParse(x.AbsolutePath
+                    .Split('/')
+                    .Aggregate(default(string), (a, c) => (a ?? c) == "status" ? c : a), out var result) ? result : default)
+                .Where(x => x != default);
+
+            if (!ids.Any())
+                return Task.CompletedTask;
+
+            var markReadTask = tokens.DirectMessages.MarkReadAsync();
+
+            Task ReplyAsync(long userId, long statusId) =>
+                tokens.DirectMessages.Events.NewAsync(
+                    user_id => userId,
+                    text => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}");
+
+            Task ReplyBulkAsync(long userId, IEnumerable<long> statusIds) =>
+                tokens.DirectMessages.Events.NewAsync(
+                    user_id => userId,
+                    text => string.Join('\n', Enumerable
+                        .Repeat("ツイート時刻（上から順に）", 1)
+                        .Concat(statusIds.Select(x => x.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)).ToString("HH:mm:ss.fff")))));
+
+            return Task.WhenAll(
+                markReadTask,
+                @event.Source.Id is long userId ?
+                    ids.SingleOrDefault() is long id ?
+                        ReplyAsync(userId, id) :
+                        ReplyBulkAsync(userId, ids) :
+                    Task.CompletedTask);
         }
     }
 
@@ -141,6 +210,9 @@ namespace ReporterNext.Components
 
             factory.Create<TweetCreateEvent>(forUserId)
                 .Subscribe(new ReplyQuotedTimeObserver(tokens), true);
+
+            factory.Create<DirectMessageEvent>(forUserId)
+                .Subscribe(new ReplyDirectMessageQuotedTimeObserver(tokens), true);
 
             json.Subscribe(new EventObserver(factory), true);
 
