@@ -54,6 +54,7 @@ namespace ReporterNext
             services.AddHangfire(configuration =>
                 configuration.UseRedisStorage(Redis));
             services.AddReactiveInterface();
+            services.AddInteractiveInterface();
             services.AddTwitter(Configuration["Twitter:ConsumerKey"],
                     Configuration["Twitter:ConsumerSecret"],
                     Configuration["Twitter:AccessToken"],
@@ -96,6 +97,7 @@ namespace ReporterNext
                 }
             });
             app.UseReactiveInterface(Configuration.GetValue("Twitter:ForUserId", GetAccessTokenUserId()));
+            app.UseInteractiveInterface();
 
             app.UseDefaultFiles();
             app.UseStaticFiles(new StaticFileOptions()

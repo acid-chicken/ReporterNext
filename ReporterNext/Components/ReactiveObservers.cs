@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CoreTweet;
 using Hangfire;
@@ -132,6 +133,82 @@ namespace ReporterNext.Components
         }
     }
 
+
+    public class ReplyQuickRepliedDirectMessageQuotedTimeObserver : IObserver<DirectMessageEvent>, IObserver<Event>
+    {
+        private readonly string _consumerKey;
+        private readonly string _consumerSecret;
+        private readonly string _accessToken;
+        private readonly string _accessTokenSecret;
+
+        public ReplyQuickRepliedDirectMessageQuotedTimeObserver(Tokens tokens)
+        {
+            _consumerKey = tokens.ConsumerKey;
+            _consumerSecret = tokens.ConsumerSecret;
+            _accessToken = tokens.AccessToken;
+            _accessTokenSecret = tokens.AccessTokenSecret;
+        }
+
+        public void OnCompleted()
+        {
+        }
+
+        public void OnError(Exception error)
+        {
+        }
+
+        public void OnNext(Event value) =>
+            OnNext((TweetCreateEvent)value);
+
+        public void OnNext(DirectMessageEvent value) =>
+            BackgroundJob.Enqueue(() => JobAsync(_consumerKey, _consumerSecret, _accessToken, _accessTokenSecret, value));
+
+        public static Task JobAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, DirectMessageEvent @event)
+        {
+            var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
+            var myId = long.Parse(accessToken.Split('-')[0]);
+            var metadataSections = @event.Content.QuickReplyResponse.Metadata?.Split(':');
+
+            if (@event.Content.QuickReplyResponse.Type != "options" || (metadataSections?.Length ?? 0) < 1 || !(@event.Source.Id is long recipientId) || recipientId == myId)
+                return Task.CompletedTask;
+
+            Task PickOneFromUserTimelineAndReplyAsync(long recipientId, Regex targets) =>
+                Task.WhenAll(
+                    tokens.DirectMessages.MarkReadAsync(
+                        last_read_event_id => @event.Id,
+                        recipient_id => recipientId),
+                    tokens.DirectMessages.IndicateTypingAsync(
+                        recipient_id => recipientId),
+                    tokens.Statuses.UserTimelineAsync(
+                        user_id => recipientId,
+                        count => 200,
+                        trim_user => true,
+                        exclude_replies => true,
+                        include_rts => false,
+                        include_ext_alt_text => true,
+                        tweet_mode => TweetMode.Extended)
+                        .ContinueWith(x =>
+                        {
+                            var statusId = x.Result.FirstOrDefault(x => targets.IsMatch(x.FullText ?? x.Text)).Id;
+
+                            return tokens.DirectMessages.Events.NewAsync(
+                                recipient_id => recipientId,
+                                text => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff} https://twitter.com/i/web/status/${statusId}");
+                        }));
+
+            return metadataSections[0] switch
+            {
+                CronTasks.PickOneFromUserTimeline =>
+                    metadataSections[1] switch
+                    {
+                        "334" => PickOneFromUserTimelineAndReplyAsync(recipientId, CronTasks.AvailableTargets.TryGetValue("334", out var result) ? result.Value : new Regex("334")),
+                        _ => Task.CompletedTask,
+                    },
+                _ => Task.CompletedTask,
+            };
+        }
+    }
+
     public class EventObserver : IObserver<EventObject>
     {
         private readonly EventObservableFactory _factory;
@@ -213,6 +290,9 @@ namespace ReporterNext.Components
 
             factory.Create<DirectMessageEvent>(forUserId)
                 .Subscribe(new ReplyDirectMessageQuotedTimeObserver(tokens), true);
+
+            factory.Create<DirectMessageEvent>(forUserId)
+                .Subscribe(new ReplyQuickRepliedDirectMessageQuotedTimeObserver(tokens), true);
 
             json.Subscribe(new EventObserver(factory), true);
 
