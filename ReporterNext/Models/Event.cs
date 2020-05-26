@@ -33,6 +33,12 @@ namespace ReporterNext.Models
         [JsonProperty("for_user_id")]
         public string ForUserId { get; set; }
 
+        [JsonProperty("user_has_blocked")]
+        public bool UserHasBlocked { get; set; }
+
+        [JsonProperty("is_blocked_by")]
+        public string IsBlockedBy { get; set; }
+
         [JsonProperty("tweet_create_events")]
         public Status[] TweetCreateEvents { get; set; }
 
@@ -89,6 +95,8 @@ namespace ReporterNext.Models
                 !(TweetCreateEvents is null) &&
                 (events = TweetCreateEvents.Select(x => new TweetCreateEvent()
                     {
+                        UserHasBlocked = UserHasBlocked,
+                        IsBlockedBy = long.TryParse(IsBlockedBy, out var result) ? result : default,
                         CreatedAt = x.CreatedAt,
                         Target = x
                     })).Any();
@@ -326,6 +334,9 @@ namespace ReporterNext.Models
 
     public class TweetCreateEvent : ToStatusEvent
     {
+        public bool UserHasBlocked { get; set; }
+
+        public long? IsBlockedBy { get; set; }
     }
 
     public class FavoriteEvent : ToStatusEvent

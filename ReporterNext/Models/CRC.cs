@@ -7,7 +7,7 @@ namespace ReporterNext.Models
 {
     public class CRC
     {
-        private KeyedHashAlgorithm _keyedHash;
+        private readonly KeyedHashAlgorithm _keyedHash;
 
         public CRC(KeyedHashAlgorithm keyedHash) =>
             _keyedHash = keyedHash;

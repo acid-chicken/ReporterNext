@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using CoreTweet;
 using ReporterNext.Models;
 
 namespace ReporterNext.Components
 {
     public class EventObservableFactory
     {
-        private IDictionary<Type, IDictionary<long, EventObservable>> _observables =
+        private readonly IDictionary<Type, IDictionary<long, EventObservable>> _observables =
             new Dictionary<Type, IDictionary<long, EventObservable>>();
 
         private IDictionary<long, EventObservable> GetOrCreateDictionary<T>()

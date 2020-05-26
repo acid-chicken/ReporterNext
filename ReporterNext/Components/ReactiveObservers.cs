@@ -11,10 +11,10 @@ namespace ReporterNext.Components
 {
     public class ReplyQuotedTimeObserver : IObserver<TweetCreateEvent>, IObserver<Event>
     {
-        private string _consumerKey;
-        private string _consumerSecret;
-        private string _accessToken;
-        private string _accessTokenSecret;
+        private readonly string _consumerKey;
+        private readonly string _consumerSecret;
+        private readonly string _accessToken;
+        private readonly string _accessTokenSecret;
 
         public ReplyQuotedTimeObserver(Tokens tokens)
         {
@@ -42,28 +42,30 @@ namespace ReporterNext.Components
         {
             var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
             var myId = long.Parse(accessToken.Split('-')[0]);
+
             Task ReplyAsync(long id) =>
-                    tokens.Statuses.UpdateAsync(
+                tokens.Statuses.UpdateAsync(
                     status => $"ツイート時刻：{id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
-                        in_reply_to_status_id => @event.Target.Id,
-                        auto_populate_reply_metadata => true,
-                        include_ext_alt_text => true,
+                    in_reply_to_status_id => @event.Target.Id,
+                    auto_populate_reply_metadata => true,
+                    include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended);
+
             return
                 (@event.Target.QuotedStatusId ?? @event.Target.QuotedStatus?.Id) is long quotedId &&
-                    @event.Target.InReplyToUserId is long userId &&
-                    userId == myId ?
+                @event.Target.InReplyToUserId is long userId &&
+                userId == myId ?
                     ReplyAsync(quotedId) :
                 @event.Target.InReplyToStatusId is long replyId &&
                 @event.Target.User.Id != myId ?
                     ReplyAsync(replyId) :
                 Task.CompletedTask;
-    }
+        }
     }
 
     public class EventObserver : IObserver<EventObject>
     {
-        private EventObservableFactory _factory;
+        private readonly EventObservableFactory _factory;
 
         public EventObserver(EventObservableFactory factory)
         {

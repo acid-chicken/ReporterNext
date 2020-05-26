@@ -1,23 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CoreTweet;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using ReporterNext.Components;
 using ReporterNext.Models;
 
 namespace ReporterNext.Controllers
 {
-    [Route("[controller]/[action]"), ApiController]
+  [Route("[controller]/[action]"), ApiController]
     public class WebhooksController : ControllerBase
     {
-        private JsonObservable _observable;
+        private readonly JsonObservable _observable;
 
-        private CRC _crc;
+        private readonly CRC _crc;
 
         public WebhooksController(JsonObservable observable, CRC crc)
         {
@@ -27,7 +20,12 @@ namespace ReporterNext.Controllers
 
         // GET webhooks/twitter
         [HttpGet]
-        public IActionResult Twitter([FromQuery(Name = "crc_token")] string crcToken, [FromQuery(Name = "nonce")] string nonce) =>
+        public IActionResult Twitter(
+            [FromQuery(Name = "crc_token")] string crcToken,
+#pragma warning disable IDE0060
+            [FromQuery(Name = "nonce")] string nonce
+#pragma warning restore IDE0060
+        ) =>
             Ok(_crc.GenerateResponse(crcToken));
 
         // POST webhooks/twitter
