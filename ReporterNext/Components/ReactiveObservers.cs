@@ -105,7 +105,7 @@ namespace ReporterNext.Components
                     .Aggregate(default(string), (a, c) => (a ?? c) == "status" ? c : a), out var result) ? result : default)
                 .Where(x => x != default);
 
-            if (!ids.Any() || !(@event.Source.Id is long recipientId))
+            if (!ids.Any() || !(@event.Source.Id is long recipientId) || recipientId == myId)
                 return Task.CompletedTask;
 
             var markReadTask = tokens.DirectMessages.MarkReadAsync(
