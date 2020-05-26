@@ -125,7 +125,7 @@ namespace ReporterNext.Components
             return Task.WhenAll(
                 markReadTask,
                 @event.Source.Id is long recipientId ?
-                    ids.SingleOrDefault() is long id ?
+                    ids.Count() == 1 && ids.FirstOrDefault() is long id ?
                         ReplyAsync(recipientId, id) :
                         ReplyBulkAsync(recipientId, ids) :
                     Task.CompletedTask);
