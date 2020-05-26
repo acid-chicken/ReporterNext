@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>latest</LangVersion>
     <UserSecretsId>334c7fb8-e95b-4321-b1fa-a2078824330f</UserSecretsId>
     <AssemblyName>ReporterNext</AssemblyName>
@@ -12,12 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="HangFire" Version="1.7.6" />
-    <PackageReference Include="HangFire.Redis.StackExchange" Version="1.8.0" />
-    <PackageReference Include="LiteDB" Version="4.1.4" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.0.0-preview9.19424.4" />
-    <PackageReference Include="SkiaSharp" Version="1.68.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
+    <PackageReference Include="HangFire" Version="1.7.11" />
+    <PackageReference Include="HangFire.Redis.StackExchange" Version="1.8.3" />
+    <PackageReference Include="LiteDB" Version="5.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.4" />
+    <PackageReference Include="SkiaSharp" Version="1.68.3" />
+    <PackageReference Include="StackExchange.Redis" Version="2.1.30" />
   </ItemGroup>
 
 </Project>
