@@ -27,7 +27,7 @@ namespace ReporterNext.Components
         {
             var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
             var myId = long.Parse(accessToken.Split('-')[0]);
-            var name = $"${PickOneFromUserTimelineInducer}:${key}";
+            var name = $"${PickOneFromUserTimelineInducer}_${key}";
 
             Task<WelcomeMessage> FindTargetedWelcomeMessage(string nextCursor = default) =>
                 tokens.DirectMessages.WelcomeMessages.ListAsync(
