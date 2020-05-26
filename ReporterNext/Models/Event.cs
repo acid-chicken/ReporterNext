@@ -183,7 +183,7 @@ namespace ReporterNext.Models
                     .Select(x => new DirectMessageEvent()
                     {
                         CreatedAt = x.Timestamp,
-                        Target = Users.TryGetValue(x.MessageCreate.Target.RecipientId, out var target) ? new User()
+                        Target = !(Users is null) && Users.TryGetValue(x.MessageCreate.Target.RecipientId, out var target) ? new User()
                         {
                             Id = long.TryParse(target.Id, out var targetId) ? targetId : null as long?,
                             CreatedAt = target.Timestamp,
@@ -199,7 +199,7 @@ namespace ReporterNext.Models
                             ProfileImageUrl = target.ProfileImageUrl ?? target.ProfileImageUrlHttps.Replace("https://", "http://"),
                             ProfileImageUrlHttps = target.ProfileImageUrlHttps ?? target.ProfileImageUrl.Replace("http://", "https://")
                         } : null,
-                        Source = Users.TryGetValue(x.MessageCreate.SenderId, out var source) ? new User()
+                        Source = !(Users is null) && Users.TryGetValue(x.MessageCreate.SenderId, out var source) ? new User()
                         {
                             Id = long.TryParse(source.Id, out var sourceId) ? sourceId : null as long?,
                             CreatedAt = source.Timestamp,
@@ -215,7 +215,7 @@ namespace ReporterNext.Models
                             ProfileImageUrl = source.ProfileImageUrl ?? source.ProfileImageUrlHttps.Replace("https://", "http://"),
                             ProfileImageUrlHttps = source.ProfileImageUrlHttps ?? source.ProfileImageUrl.Replace("http://", "https://")
                         } : null,
-                        App = Apps.TryGetValue(x.MessageCreate.SourceAppId, out var app) ? new App()
+                        App = !(Apps is null) && Apps.TryGetValue(x.MessageCreate.SourceAppId, out var app) ? new App()
                         {
                             Id = app.Id,
                             Name = app.Name,
