@@ -110,24 +110,24 @@ namespace ReporterNext.Components
 
             var markReadTask = tokens.DirectMessages.MarkReadAsync();
 
-            Task ReplyAsync(long userId, long statusId) =>
+            Task ReplyAsync(long recipientId, long statusId) =>
                 tokens.DirectMessages.Events.NewAsync(
-                    user_id => userId,
+                    recipient_id => recipientId,
                     text => $"ツイート時刻：{statusId.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}");
 
-            Task ReplyBulkAsync(long userId, IEnumerable<long> statusIds) =>
+            Task ReplyBulkAsync(long recipientId, IEnumerable<long> statusIds) =>
                 tokens.DirectMessages.Events.NewAsync(
-                    user_id => userId,
+                    recipient_id => recipientId,
                     text => string.Join('\n', Enumerable
                         .Repeat("ツイート時刻（上から順に）", 1)
                         .Concat(statusIds.Select(x => x.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)).ToString("HH:mm:ss.fff")))));
 
             return Task.WhenAll(
                 markReadTask,
-                @event.Source.Id is long userId ?
+                @event.Source.Id is long recipientId ?
                     ids.SingleOrDefault() is long id ?
-                        ReplyAsync(userId, id) :
-                        ReplyBulkAsync(userId, ids) :
+                        ReplyAsync(recipientId, id) :
+                        ReplyBulkAsync(recipientId, ids) :
                     Task.CompletedTask);
         }
     }
