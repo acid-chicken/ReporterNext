@@ -203,8 +203,8 @@ namespace ReporterNext.Components
             {
                 CronTasks.PickOneFromUserTimeline => CronTasks.AvailableTargets.TryGetValue(metadataSections[1], out var result) ?
                     PickOneFromUserTimelineAndReplyAsync(recipientId, new Regex(result.Value)) :
-                    Task.CompletedTask,
-                _ => Task.CompletedTask,
+                    Task.FromException(new InvalidOperationException($"Unknown section 1 \"{metadataSections[1]}\"")),
+                _ => Task.FromException(new InvalidOperationException($"Unknown section 0 \"{metadataSections[0]}\"")),
             };
         }
     }
