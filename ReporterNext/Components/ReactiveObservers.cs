@@ -167,7 +167,7 @@ namespace ReporterNext.Components
         {
             var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
             var myId = long.Parse(accessToken.Split('-')[0]);
-            var metadataSections = @event.Content.QuickReplyResponse.Metadata?.Split(':');
+            var metadataSections = @event.Content.QuickReplyResponse?.Metadata?.Split(':');
 
             if (@event.Content.QuickReplyResponse?.Type != "options" || (metadataSections?.Length ?? 0) < 1 || !(@event.Source.Id is long recipientId) || recipientId == myId)
                 return Task.CompletedTask;
