@@ -182,7 +182,6 @@ namespace ReporterNext.Components
                     tokens.Statuses.UserTimelineAsync(
                         user_id => recipientId,
                         count => 200,
-                        trim_user => true,
                         exclude_replies => true,
                         include_rts => false,
                         include_ext_alt_text => true,
