@@ -201,12 +201,9 @@ namespace ReporterNext.Components
 
             return metadataSections[0] switch
             {
-                CronTasks.PickOneFromUserTimeline =>
-                    metadataSections[1] switch
-                    {
-                        "334" => PickOneFromUserTimelineAndReplyAsync(recipientId, new Regex(CronTasks.AvailableTargets.TryGetValue("334", out var result) ? result.Value : "^334$")),
-                        _ => Task.CompletedTask,
-                    },
+                CronTasks.PickOneFromUserTimeline => CronTasks.AvailableTargets.TryGetValue(metadataSections[1], out var result) ?
+                    PickOneFromUserTimelineAndReplyAsync(recipientId, new Regex(result.Value)) :
+                    Task.CompletedTask,
                 _ => Task.CompletedTask,
             };
         }
