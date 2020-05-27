@@ -197,7 +197,8 @@ namespace ReporterNext.Components
                             return tokens.DirectMessages.Events.NewAsync(
                                 recipient_id => recipientId,
                                 text => text);
-                        }));
+                        })
+                        .Unwrap());
 
             return metadataSections[0] switch
             {
