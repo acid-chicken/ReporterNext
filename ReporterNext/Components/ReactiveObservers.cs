@@ -40,7 +40,7 @@ namespace ReporterNext.Components
         public void OnNext(TweetCreateEvent value) =>
             BackgroundJob.Enqueue(() => JobAsync(_consumerKey, _consumerSecret, _accessToken, _accessTokenSecret, value));
 
-        public static Task JobAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, TweetCreateEvent @event)
+        public static async Task JobAsync(string consumerKey, string consumerSecret, string accessToken, string accessTokenSecret, TweetCreateEvent @event)
         {
             var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
             var myId = long.Parse(accessToken.Split('-')[0]);
@@ -53,15 +53,24 @@ namespace ReporterNext.Components
                     include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended);
 
-            return
-                (@event.Target.QuotedStatusId ?? @event.Target.QuotedStatus?.Id) is long quotedId &&
+            async Task<bool> IsReplyable(long statusId)
+            {
+                var status = await tokens.Statuses.ShowAsync(
+                    id => statusId,
+                    include_ext_alt_text => true,
+                    tweet_mode => TweetMode.Extended);
+
+                return status.InReplyToUserId != myId && ((status.ExtendedEntities?.UserMentions ?? status.Entities?.UserMentions)?.All(x => x.Id == myId) ?? true);
+            };
+
+            if ((@event.Target.QuotedStatusId ?? @event.Target.QuotedStatus?.Id) is long quotedId &&
                 @event.Target.InReplyToUserId is long userId &&
-                userId == myId ?
-                    ReplyAsync(quotedId) :
-                @event.Target.InReplyToStatusId is long replyId &&
-                @event.Target.User.Id != myId ?
-                    ReplyAsync(replyId) :
-                Task.CompletedTask;
+                userId == myId)
+                await ReplyAsync(quotedId);
+            else if (@event.Target.InReplyToStatusId is long replyId &&
+                @event.Target.User.Id != myId &&
+                await IsReplyable(replyId))
+                await ReplyAsync(replyId);
         }
     }
 
