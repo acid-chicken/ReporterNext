@@ -16,7 +16,9 @@ namespace ReporterNext.Components
 
         public static IDictionary<string, KeyValuePair<string, string>> AvailableTargets = new Dictionary<string, KeyValuePair<string, string>>
         {
+            /*
             ["334"] = KeyValuePair.Create("334", "^334$"),
+            */
         };
 
         public static IDictionary<string, string> ObsoleteTargets = new Dictionary<string, string>
