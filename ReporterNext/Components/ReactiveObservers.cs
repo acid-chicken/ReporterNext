@@ -53,14 +53,15 @@ namespace ReporterNext.Components
                     include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended);
 
-            async Task<bool> IsReplyable(long statusId)
+            async Task<bool> IsReplyable(Status source, long targetId)
             {
-                var status = await tokens.Statuses.ShowAsync(
-                    id => statusId,
+                var target = await tokens.Statuses.ShowAsync(
+                    id => targetId,
                     include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended);
+                var mentions = (target.ExtendedEntities?.UserMentions ?? target.Entities?.UserMentions)?.Select(x => x.Id).Except((source.ExtendedEntities?.UserMentions ?? source.Entities?.UserMentions)?.Select(x => x.Id) ?? Enumerable.Empty<long>()) ?? Enumerable.Empty<long>();
 
-                return status.InReplyToUserId != myId && ((status.ExtendedEntities?.UserMentions ?? status.Entities?.UserMentions)?.All(x => x.Id == myId) ?? true);
+                return target.InReplyToUserId != myId && mentions.Any() && mentions.All(x => x == myId);
             };
 
             if ((@event.Target.QuotedStatusId ?? @event.Target.QuotedStatus?.Id) is long quotedId &&
@@ -69,7 +70,7 @@ namespace ReporterNext.Components
                 await ReplyAsync(quotedId);
             else if (@event.Target.InReplyToStatusId is long replyId &&
                 @event.Target.User.Id != myId &&
-                await IsReplyable(replyId))
+                await IsReplyable(@event.Target, replyId))
                 await ReplyAsync(replyId);
         }
     }
@@ -98,7 +99,7 @@ namespace ReporterNext.Components
         }
 
         public void OnNext(Event value) =>
-            OnNext((TweetCreateEvent)value);
+            OnNext((DirectMessageEvent)value);
 
         public void OnNext(DirectMessageEvent value) =>
             BackgroundJob.Enqueue(() => JobAsync(_consumerKey, _consumerSecret, _accessToken, _accessTokenSecret, value));
@@ -136,7 +137,7 @@ namespace ReporterNext.Components
 
             return Task.WhenAll(
                 markReadTask,
-                ids.Count() == 1 && ids.FirstOrDefault() is long id ?
+                ids.Distinct().Count() == 1 && ids.FirstOrDefault() is long id ?
                     ReplyAsync(recipientId, id) :
                     ReplyBulkAsync(recipientId, ids));
         }
@@ -167,7 +168,7 @@ namespace ReporterNext.Components
         }
 
         public void OnNext(Event value) =>
-            OnNext((TweetCreateEvent)value);
+            OnNext((DirectMessageEvent)value);
 
         public void OnNext(DirectMessageEvent value) =>
             BackgroundJob.Enqueue(() => JobAsync(_consumerKey, _consumerSecret, _accessToken, _accessTokenSecret, value));
