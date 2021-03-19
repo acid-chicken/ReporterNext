@@ -199,13 +199,12 @@ namespace ReporterNext.Components
                         .ContinueWith(x =>
                         {
                             var status = x.Result.FirstOrDefault(x => targets.IsMatch(x.FullText ?? x.Text));
-                            var text = status is null ?
-                                "エラー：ツイートが見つかりませんでした。" :
-                                $"ツイート時刻：{status.Id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}";
 
                             return tokens.DirectMessages.Events.NewAsync(
                                 recipient_id => recipientId,
-                                text => text);
+                                text => status is null ?
+                                    "エラー：ツイートが見つかりませんでした。" :
+                                    $"ツイート時刻：{status.Id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff});
                         })
                         .Unwrap());
 
