@@ -201,7 +201,7 @@ namespace ReporterNext.Components
                         {
                             var status = x.Result.FirstOrDefault(x => targets.IsMatch(x.FullText ?? x.Text));
                             var result = status is null ?
-                                "エラー：ツイートが見つかりませんでした。" :
+                                "エラー：直近 24 時間でツイートが見つかりませんでした。" :
                                 $"ツイート時刻：{status.Id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff} https://twitter.com/{status.User.ScreenName}/status/{status.Id}";
 
                             return tokens.DirectMessages.Events.NewAsync(
