@@ -59,7 +59,7 @@ namespace ReporterNext.Components
                     id => targetId,
                     include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended);
-                var mentions = (target.ExtendedEntities?.UserMentions ?? target.Entities?.UserMentions)?.Select(x => x.Id).Except((source.ExtendedEntities?.UserMentions ?? source.Entities?.UserMentions)?.Select(x => x.Id) ?? Enumerable.Empty<long>()) ?? Enumerable.Empty<long>();
+                var mentions = (target.ExtendedEntities?.UserMentions ?? target.Entities?.UserMentions)?.Select(x => x.Id ?? long.MinValue).Except((source.ExtendedEntities?.UserMentions ?? source.Entities?.UserMentions)?.Select(x => x.Id ?? long.MinValue) ?? Enumerable.Empty<long>()) ?? Enumerable.Empty<long>();
 
                 return target.InReplyToUserId != myId && mentions.Any() && mentions.All(x => x == myId);
             };
