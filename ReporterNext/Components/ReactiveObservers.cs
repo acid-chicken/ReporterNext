@@ -53,15 +53,15 @@ namespace ReporterNext.Components
                     include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended);
 
-            async Task<bool> IsReplyable(Status source, long targetId)
+            async Task<bool> IsReplyable(long targetId)
             {
                 var target = await tokens.Statuses.ShowAsync(
                     id => targetId,
                     include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended);
-                var mentions = (target.ExtendedEntities?.UserMentions ?? target.Entities?.UserMentions)?.Select(x => x.Id ?? long.MinValue).Except((source.ExtendedEntities?.UserMentions ?? source.Entities?.UserMentions)?.Select(x => x.Id ?? long.MinValue) ?? Enumerable.Empty<long>()) ?? Enumerable.Empty<long>();
+                var mentions = (target.ExtendedEntities?.UserMentions ?? target.Entities?.UserMentions)?.Select(x => x.Id ?? long.MinValue) ?? Enumerable.Empty<long>();
 
-                return target.InReplyToUserId != myId && mentions.Any() && mentions.All(x => x == myId);
+                return target.InReplyToUserId != myId && mentions.All(x => x == myId);
             };
 
             if ((@event.Target.QuotedStatusId ?? @event.Target.QuotedStatus?.Id) is long quotedId &&
@@ -70,7 +70,7 @@ namespace ReporterNext.Components
                 await ReplyAsync(quotedId);
             else if (@event.Target.InReplyToStatusId is long replyId &&
                 @event.Target.User.Id != myId &&
-                await IsReplyable(@event.Target, replyId))
+                await IsReplyable(replyId))
                 await ReplyAsync(replyId);
         }
     }
