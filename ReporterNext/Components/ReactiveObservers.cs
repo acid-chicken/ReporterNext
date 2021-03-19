@@ -204,7 +204,7 @@ namespace ReporterNext.Components
                                 recipient_id => recipientId,
                                 text => status is null ?
                                     "エラー：ツイートが見つかりませんでした。" :
-                                    $"ツイート時刻：{status.Id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff});
+                                    $"ツイート時刻：{status.Id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}");
                         })
                         .Unwrap());
 
