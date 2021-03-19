@@ -192,6 +192,7 @@ namespace ReporterNext.Components
                     tokens.Statuses.UserTimelineAsync(
                         user_id => recipientId,
                         count => 200,
+                        since_id => @event.Id - 362387865600000,
                         exclude_replies => true,
                         include_rts => false,
                         include_ext_alt_text => true,
