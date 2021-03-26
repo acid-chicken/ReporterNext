@@ -1,21 +1,15 @@
-using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using ReporterNext.Components;
 using ReporterNext.Models;
 using StackExchange.Redis;
@@ -50,6 +44,7 @@ namespace ReporterNext
             var accessTokenUserId = GetAccessTokenUserId();
             services.AddSingleton(Configuration);
             services.AddSingleton(Redis);
+            services.AddSingleton(new ConcurrentDictionary<long, long>());
             services.AddSingleton(new CRC(KeyedHashAlgorithm.Create("HMACSHA256"), Configuration["Twitter:ConsumerSecret"]));
             services.AddHangfire(configuration =>
                 configuration.UseRedisStorage(Redis));

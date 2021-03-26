@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -17,6 +18,8 @@ namespace ReporterNext.Components
         private readonly string _consumerSecret;
         private readonly string _accessToken;
         private readonly string _accessTokenSecret;
+
+        public static ConcurrentDictionary<long, long> CurrentMetrics { get; set; }
 
         public ReplyQuotedTimeObserver(Tokens tokens)
         {
@@ -45,13 +48,20 @@ namespace ReporterNext.Components
             var tokens = Tokens.Create(consumerKey, consumerSecret, accessToken, accessTokenSecret);
             var myId = long.Parse(accessToken.Split('-')[0]);
 
-            Task ReplyAsync(long id) =>
-                tokens.Statuses.UpdateAsync(
-                    status => $"ツイート時刻：{id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
+            async Task ReplyAsync(long id)
+            {
+                var text = $"ツイート時刻：{id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}";
+                var before = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                var status = await tokens.Statuses.UpdateAsync(
+                    status => text,
                     in_reply_to_status_id => @event.Target.Id,
                     auto_populate_reply_metadata => true,
                     include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended);
+                var after = status.Id.ToSnowflake().ToUnixTimeMilliseconds();
+
+                CurrentMetrics.GetOrAdd(status.Id, after - before);
+            }
 
             async Task<bool> IsReplyable(long targetId)
             {
@@ -213,7 +223,7 @@ namespace ReporterNext.Components
             return metadataSections[0] switch
             {
                 CronTasks.PickOneFromUserTimeline => CronTasks.AvailableTargets.TryGetValue(metadataSections[1], out var result) ?
-                    PickOneFromUserTimelineAndReplyAsync(recipientId, new Regex(result.Value)) :
+                    PickOneFromUserTimelineAndReplyAsync(recipientId, new Regex(result.Rule)) :
                     Task.FromException(new InvalidOperationException($"Unknown section 1 \"{metadataSections[1]}\"")),
                 _ => Task.FromException(new InvalidOperationException($"Unknown section 0 \"{metadataSections[0]}\"")),
             };
@@ -292,9 +302,12 @@ namespace ReporterNext.Components
 
         public static IApplicationBuilder UseReactiveInterface(this IApplicationBuilder app, long forUserId = default)
         {
+            var metrics = app.ApplicationServices.GetService<ConcurrentDictionary<long, long>>();
             var tokens = app.ApplicationServices.GetService<Tokens>();
             var factory = app.ApplicationServices.GetService<EventObservableFactory>();
             var json = app.ApplicationServices.GetService<JsonObservable>();
+
+            ReplyQuotedTimeObserver.CurrentMetrics = metrics;
 
             factory.Create<TweetCreateEvent>(forUserId)
                 .Subscribe(new ReplyQuotedTimeObserver(tokens), true);
