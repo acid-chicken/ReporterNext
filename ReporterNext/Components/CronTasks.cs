@@ -78,7 +78,7 @@ namespace ReporterNext.Components
                     include_ext_alt_text => true,
                     tweet_mode => TweetMode.Extended);
 
-            var target = new DateTimeOffset(DateTimeOffset.UtcNow.Date, new TimeSpan(value.Origin));
+            var target = new DateTimeOffset(DateTimeOffset.UtcNow.Date, TimeSpan.Zero) + new TimeSpan(value.Origin);
             var divisor = default(double);
             var dividend = default(double);
 
@@ -100,8 +100,8 @@ namespace ReporterNext.Components
                 }
             }
 
-            var wait = divisor > 0 ? (int)(dividend / divisor) : 0;
-            var delay = target - DateTimeOffset.UtcNow;
+            var wait = TimeSpan.FromMilliseconds(divisor > 0 ? dividend / divisor : 0);
+            var delay = target - wait - DateTimeOffset.UtcNow;
 
             if (TimeSpan.FromDays(1) > delay && delay > TimeSpan.Zero)
             {
