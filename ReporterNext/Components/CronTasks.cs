@@ -108,7 +108,14 @@ namespace ReporterNext.Components
                 await Task.Delay(delay);
             }
 
-            await AnnounceAsync();
+            var announced = await AnnounceAsync();
+
+            await tokens.Statuses.UpdateAsync(
+                status => $"ツイート時刻：{announced.Id.ToSnowflake().ToOffset(new TimeSpan(9, 0, 0)):HH:mm:ss.fff}",
+                in_reply_to_status_id => announced.Id,
+                auto_populate_reply_metadata => true,
+                include_ext_alt_text => true,
+                tweet_mode => TweetMode.Extended);
         }
     }
 
