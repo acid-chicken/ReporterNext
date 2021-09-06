@@ -46,6 +46,7 @@ namespace ReporterNext
             services.AddSingleton(Redis);
             services.AddSingleton(new ConcurrentDictionary<long, long>());
             services.AddSingleton(new CRC(KeyedHashAlgorithm.Create("HMACSHA256"), Configuration["Twitter:ConsumerSecret"]));
+            services.AddNetworkRouteAuthorization(Configuration["NetworkRouteAuthorization:Name"], Configuration["NetworkRouteAuthorization:Value"]);
             services.AddHangfire(configuration =>
                 configuration.UseRedisStorage(Redis));
             services.AddReactiveInterface();
@@ -75,7 +76,7 @@ namespace ReporterNext
         {
             _ = env.IsDevelopment() ?
                 app.UseDeveloperExceptionPage() :
-                app.UseHsts();
+                app.UseHsts().UseNetworkRouteAuthorization();
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions()
             {
